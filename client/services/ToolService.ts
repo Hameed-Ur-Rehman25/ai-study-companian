@@ -22,13 +22,15 @@ export class ToolService {
         name: 'Chat with PDF',
         icon: MessageCircle,
         color: 'bg-blue-500',
-        description: 'Ask questions and get instant answers from your PDF documents'
+        description: 'Ask questions and get instant answers from your PDF documents',
+        href: '/chat-with-pdf'
       },
       {
         name: 'Summarize PDF',
         icon: Sparkles,
         color: 'bg-emerald-500',
-        description: 'Get AI-powered summaries of your PDF documents in seconds'
+        description: 'Get AI-powered summaries of your PDF documents in seconds',
+        href: '/summarize-pdf'
       },
       {
         name: 'Word to PDF',

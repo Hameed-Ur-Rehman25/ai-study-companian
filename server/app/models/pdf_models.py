@@ -1,0 +1,51 @@
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from enum import Enum
+
+
+class PDFUploadRequest(BaseModel):
+    """Request model for PDF upload"""
+    filename: str
+    file_size: int = Field(..., gt=0, description="File size in bytes")
+
+
+class PDFPageContent(BaseModel):
+    """Content extracted from a single PDF page"""
+    page_num: int
+    text: str
+    images: List[str] = Field(default_factory=list, description="List of image file paths")
+    duration: Optional[float] = None
+    title: Optional[str] = None
+    bullet_points: List[str] = Field(default_factory=list)
+
+
+class PDFExtractionResponse(BaseModel):
+    """Response model for PDF extraction"""
+    job_id: str
+    total_pages: int
+    pages: List[PDFPageContent]
+    status: str = "extracted"
+
+
+class ConversionStatus(str, Enum):
+    """Conversion job status"""
+    PENDING = "pending"
+    UPLOADING = "uploading"
+    EXTRACTING = "extracting"
+    GENERATING_AUDIO = "generating_audio"
+    CREATING_VIDEO = "creating_video"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ConversionRequest(BaseModel):
+    """Request model for PDF to video conversion"""
+    job_id: str
+    voice_name: Optional[str] = "en-US-Neural2-D"
+    language_code: Optional[str] = "en-US"
+    speaking_rate: Optional[float] = Field(default=1.0, ge=0.25, le=4.0)
+    pitch: Optional[float] = Field(default=0.0, ge=-20.0, le=20.0)
+    video_quality: Optional[str] = "high"  # low, medium, high
+    include_animations: Optional[bool] = True
+    include_transitions: Optional[bool] = True
+

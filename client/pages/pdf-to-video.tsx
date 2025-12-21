@@ -51,14 +51,16 @@ const PDFToVideo: NextPage = () => {
               <p className="text-lg sm:text-xl text-blue-100 mb-8">
                 Transform your PDF documents into engaging video lectures with AI-powered narration
               </p>
-              <MotionWrapper
-                as="button"
-                className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold text-lg hover:bg-blue-50 transition-colors shadow-lg"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Get Started Free
-              </MotionWrapper>
+              <Link href="/pdf-to-video/convert">
+                <MotionWrapper
+                  as="button"
+                  className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold text-lg hover:bg-blue-50 transition-colors shadow-lg"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Get Started Free
+                </MotionWrapper>
+              </Link>
             </MotionWrapper>
           </div>
         </section>

@@ -9,29 +9,29 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/is-prop-valid": "^1.2.1",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.344.0",
+    "next": "^14.2.18",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "next": "^14.2.18",
-    "lucide-react": "^0.344.0",
-    "clsx": "^2.1.0",
+    "react-markdown": "^10.1.0",
     "tailwind-merge": "^2.2.1",
-    "framer-motion": "^11.0.0",
-    "vanilla-tilt": "^1.8.0",
-    "@emotion/is-prop-valid": "^1.2.1"
+    "vanilla-tilt": "^1.8.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "typescript": "^5.5.3",
+    "autoprefixer": "^10.4.17",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.18",
-    "tailwindcss": "^3.4.1",
     "postcss": "^8.4.35",
-    "autoprefixer": "^10.4.17"
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3"
   },
   "overrides": {
     "glob": "^10.4.6"
   }
 }
-

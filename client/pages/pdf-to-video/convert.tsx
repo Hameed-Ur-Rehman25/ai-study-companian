@@ -1,0 +1,291 @@
+import { useState } from 'react'
+import type { NextPage } from 'next'
+import Head from 'next/head'
+import { Header } from '../../components/Header'
+import { Footer } from '../../components/Footer'
+import { PDFUpload } from '../../components/PDFUpload'
+import { ConversionProgress } from '../../components/ConversionProgress'
+import { VideoPreview } from '../../components/VideoPreview'
+import { PDFConversionController } from '../../controllers/PDFConversionController'
+import { PDFFile, ConversionOptions, ConversionStatus } from '../../models/Conversion'
+import { Settings, Play } from 'lucide-react'
+import { MotionWrapper } from '../../components/ui/MotionWrapper'
+
+const ConvertPDFToVideo: NextPage = () => {
+  const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isConverting, setIsConverting] = useState(false)
+  const [conversionStatus, setConversionStatus] = useState<ConversionStatus | null>(null)
+  const [showOptions, setShowOptions] = useState(false)
+  const [options, setOptions] = useState<ConversionOptions>({
+    voiceName: 'en-US-Neural2-D',
+    languageCode: 'en-US',
+    speakingRate: 1.0,
+    pitch: 0.0,
+    videoQuality: 'high',
+    includeAnimations: true,
+    includeTransitions: true,
+  })
+  const [error, setError] = useState<string | null>(null)
+
+  const handleFileSelect = (file: PDFFile) => {
+    setSelectedFile(file)
+    setError(null)
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile?.file) {
+      setError('Please select a PDF file')
+      return
+    }
+
+    try {
+      setIsUploading(true)
+      setError(null)
+
+      const response = await PDFConversionController.uploadPDF(selectedFile.file)
+      setJobId(response.jobId)
+
+      // Automatically start extraction
+      await PDFConversionController.extractContent(response.jobId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload PDF')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleConvert = async () => {
+    if (!jobId) {
+      setError('Please upload a PDF first')
+      return
+    }
+
+    try {
+      setIsConverting(true)
+      setError(null)
+
+      await PDFConversionController.startConversion(jobId, options)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start conversion')
+      setIsConverting(false)
+    }
+  }
+
+  const handleConversionComplete = (status: ConversionStatus) => {
+    setConversionStatus(status)
+    setIsConverting(false)
+  }
+
+  const handleConversionError = (errorMessage: string) => {
+    setError(errorMessage)
+    setIsConverting(false)
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Convert PDF to Video - AI Study Companion</title>
+        <meta name="description" content="Convert your PDF documents into engaging video lectures with AI narration" />
+      </Head>
+
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl py-8 sm:py-12">
+          <MotionWrapper
+            as="div"
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Convert PDF to Video
+            </h1>
+            <p className="text-lg text-gray-600">
+              Transform your PDF documents into engaging video lectures
+            </p>
+          </MotionWrapper>
+
+          {/* Upload Section */}
+          {!jobId && (
+            <div className="space-y-6">
+              <PDFUpload onFileSelect={handleFileSelect} />
+
+              {/* Conversion Options */}
+              <MotionWrapper
+                as="div"
+                className="bg-white rounded-xl p-6 shadow-lg"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+              >
+                <button
+                  onClick={() => setShowOptions(!showOptions)}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings size={20} className="text-gray-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Conversion Options</h3>
+                  </div>
+                  <span className="text-sm text-gray-500">{showOptions ? 'Hide' : 'Show'}</span>
+                </button>
+
+                {showOptions && (
+                  <div className="mt-4 space-y-4 pt-4 border-t border-gray-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Voice
+                        </label>
+                        <select
+                          value={options.voiceName}
+                          onChange={(e) => setOptions({ ...options, voiceName: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="en-US-Neural2-D">Male Voice (Neural)</option>
+                          <option value="en-US-Neural2-F">Female Voice (Neural)</option>
+                          <option value="en-US-Standard-D">Male Voice (Standard)</option>
+                          <option value="en-US-Standard-F">Female Voice (Standard)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Video Quality
+                        </label>
+                        <select
+                          value={options.videoQuality}
+                          onChange={(e) =>
+                            setOptions({
+                              ...options,
+                              videoQuality: e.target.value as 'low' | 'medium' | 'high',
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Speaking Rate: {options.speakingRate}x
+                        </label>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="2"
+                          step="0.1"
+                          value={options.speakingRate}
+                          onChange={(e) =>
+                            setOptions({ ...options, speakingRate: parseFloat(e.target.value) })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={options.includeAnimations}
+                            onChange={(e) =>
+                              setOptions({ ...options, includeAnimations: e.target.checked })
+                            }
+                            className="rounded"
+                          />
+                          <span className="text-sm text-gray-700">Animations</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={options.includeTransitions}
+                            onChange={(e) =>
+                              setOptions({ ...options, includeTransitions: e.target.checked })
+                            }
+                            className="rounded"
+                          />
+                          <span className="text-sm text-gray-700">Transitions</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </MotionWrapper>
+
+              {/* Upload Button */}
+              {selectedFile && (
+                <MotionWrapper
+                  as="button"
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+                  whileHover={{ scale: isUploading ? 1 : 1.02 }}
+                  whileTap={{ scale: isUploading ? 1 : 0.98 }}
+                >
+                  {isUploading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Play size={20} />
+                      Upload & Start Conversion
+                    </>
+                  )}
+                </MotionWrapper>
+              )}
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+                  {error}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Conversion Progress */}
+          {jobId && isConverting && (
+            <ConversionProgress
+              jobId={jobId}
+              onComplete={handleConversionComplete}
+              onError={handleConversionError}
+            />
+          )}
+
+          {/* Start Conversion Button (after upload) */}
+          {jobId && !isConverting && !conversionStatus && (
+            <MotionWrapper
+              as="button"
+              onClick={handleConvert}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Play size={20} />
+              Start Conversion
+            </MotionWrapper>
+          )}
+
+          {/* Video Preview */}
+          {conversionStatus?.status === 'completed' && jobId && (
+            <div className="mt-8">
+              <VideoPreview jobId={jobId} />
+            </div>
+          )}
+        </div>
+
+        <Footer />
+      </div>
+    </>
+  )
+}
+
+export default ConvertPDFToVideo
+
