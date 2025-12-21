@@ -37,10 +37,11 @@ const SummarizePDF: NextPage = () => {
 
             // 1. Upload
             const response = await PDFConversionController.uploadPDF(selectedFile.file)
-            setJobId(response.jobId)
+            const newJobId = response.jobId
+            setJobId(newJobId)
 
             // 2. Extract
-            await PDFConversionController.extractContent(response.jobId)
+            await PDFConversionController.extractContent(newJobId)
 
             setIsUploading(false)
             setIsSummarizing(true)
@@ -52,7 +53,7 @@ const SummarizePDF: NextPage = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    job_id: response.jobId
+                    job_id: newJobId
                 }),
             })
 

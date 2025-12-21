@@ -2,12 +2,15 @@
 AI routes for Chat and Summary features
 """
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.services.pdf_service import PDFService
 from app.services.storage_service import StorageService
-from app.services.gemini_service import GeminiService
+from app.services.groq_service import GroqService
+from app.services.chunking_service import ChunkingService
+from app.services.chat_history_service import ChatHistoryService
+from app.models.chat_models import ChatSession, ChatSessionWithMessages, CreateSessionRequest
 from app.api.dependencies import get_pdf_service, get_storage_service
 
 logger = logging.getLogger(__name__)
@@ -17,22 +20,32 @@ router = APIRouter(prefix="/api/ai", tags=["AI"])
 class ChatRequest(BaseModel):
     job_id: str
     messages: List[Dict[str, str]]
+    session_id: Optional[str] = None
 
 class SummaryRequest(BaseModel):
     job_id: str
 
-def get_gemini_service():
-    return GeminiService()
+def get_ai_service():
+    """Get AI service (using Groq)"""
+    return GroqService()
+
+def get_chunking_service():
+    return ChunkingService()
+
+def get_chat_history_service():
+    return ChatHistoryService()
 
 @router.post("/chat")
 async def chat_with_pdf(
     request: ChatRequest,
     storage_service: StorageService = Depends(get_storage_service),
     pdf_service: PDFService = Depends(get_pdf_service),
-    gemini_service: GeminiService = Depends(get_gemini_service)
+    ai_service: GroqService = Depends(get_ai_service),
+    chunking_service: ChunkingService = Depends(get_chunking_service),
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service)
 ):
     """
-    Chat with a PDF document
+    Chat with a PDF document with chunking support
     """
     try:
         # Get PDF content
@@ -43,6 +56,7 @@ async def chat_with_pdf(
             raise HTTPException(status_code=404, detail="PDF file not found")
             
         pdf_path = str(pdf_files[0])
+        pdf_filename = pdf_files[0].name
         extraction_result = pdf_service.extract_content(pdf_path, request.job_id)
         
         # Combine text from all pages
@@ -50,11 +64,34 @@ async def chat_with_pdf(
         
         if not full_text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from PDF")
-            
-        # Get response from Gemini
-        response = await gemini_service.chat_with_pdf(full_text, request.messages)
         
-        return {"response": response}
+        # Get or create session
+        session_id = request.session_id
+        if not session_id:
+            # Create new session
+            session = chat_history_service.create_session(request.job_id, pdf_filename)
+            session_id = session.session_id
+        
+        # Get user's current question
+        current_question = request.messages[-1]['content'] if request.messages else ""
+        
+        # Create chunks and get relevant ones
+        chunks = chunking_service.create_chunks(full_text)
+        relevant_chunks = chunking_service.get_relevant_chunks(chunks, current_question)
+        context = chunking_service.build_context(relevant_chunks)
+        
+        logger.info(f"Using {len(relevant_chunks)} chunks for context")
+        
+        # Get response from AI service
+        response = await ai_service.chat_with_pdf(context, request.messages)
+        
+        # Save messages to history
+        chat_history_service.add_messages(session_id, current_question, response)
+        
+        return {
+            "response": response,
+            "session_id": session_id
+        }
         
     except HTTPException:
         raise
@@ -67,7 +104,7 @@ async def summarize_pdf(
     request: SummaryRequest,
     storage_service: StorageService = Depends(get_storage_service),
     pdf_service: PDFService = Depends(get_pdf_service),
-    gemini_service: GeminiService = Depends(get_gemini_service)
+    ai_service: GroqService = Depends(get_ai_service)
 ):
     """
     Summarize a PDF document
@@ -89,8 +126,8 @@ async def summarize_pdf(
         if not full_text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from PDF")
             
-        # Get summary from Gemini
-        summary = await gemini_service.summarize_pdf(full_text)
+        # Get summary from AI service
+        summary = await ai_service.summarize_pdf(full_text)
         
         return {"summary": summary}
         
@@ -98,4 +135,72 @@ async def summarize_pdf(
         raise
     except Exception as e:
         logger.error(f"Error in summary endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/sessions/{job_id}")
+async def get_sessions(
+    job_id: str,
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service)
+):
+    """
+    Get all chat sessions for a job
+    """
+    try:
+        sessions = chat_history_service.get_sessions_by_job(job_id)
+        return {"sessions": sessions}
+    except Exception as e:
+        logger.error(f"Error getting sessions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/session/{session_id}")
+async def get_session(
+    session_id: str,
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service)
+):
+    """
+    Get a specific session with all messages
+    """
+    try:
+        session_data = chat_history_service.get_session(session_id)
+        if not session_data:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/sessions/new")
+async def create_new_session(
+    request: CreateSessionRequest,
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service)
+):
+    """
+    Create a new chat session
+    """
+    try:
+        session = chat_history_service.create_session(request.job_id, request.pdf_filename)
+        return {"session": session}
+    except Exception as e:
+        logger.error(f"Error creating session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/session/{session_id}")
+async def delete_session(
+    session_id: str,
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service)
+):
+    """
+    Delete a chat session
+    """
+    try:
+        success = chat_history_service.delete_session(session_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"message": "Session deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting session: {e}")
         raise HTTPException(status_code=500, detail=str(e))

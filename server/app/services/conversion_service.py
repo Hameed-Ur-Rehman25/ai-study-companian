@@ -84,7 +84,7 @@ class ConversionService:
             self.update_status(job_id, 'generating_audio', 30.0, 'Generating AI narration...')
             
             pages_text = [page.text for page in extraction_result.pages]
-            audio_files = self.tts_service.generate_audio_for_pages(
+            audio_files = await self.tts_service.generate_audio_for_pages_async(
                 pages_text=pages_text,
                 job_id=job_id,
                 voice_name=request.voice_name,

@@ -45,7 +45,7 @@ async def upload_pdf(
         job_id = str(uuid.uuid4())
         
         # Save file
-        pdf_path = storage_service.save_uploaded_file(content, file.filename)
+        pdf_path = storage_service.save_uploaded_file(content, file.filename, job_id)
         
         # Validate PDF
         is_valid, error_msg = pdf_service.validate_pdf(pdf_path, max_size)

@@ -26,7 +26,13 @@ export class PDFConversionService {
       throw new Error(error.detail || 'Failed to upload PDF')
     }
 
-    return response.json()
+    const data = await response.json()
+    return {
+      jobId: data.job_id,
+      filename: data.filename,
+      fileSize: data.file_size,
+      status: data.status
+    }
   }
 
   /**
@@ -42,7 +48,19 @@ export class PDFConversionService {
       throw new Error(error.detail || 'Failed to extract PDF content')
     }
 
-    return response.json()
+    const data = await response.json()
+    return {
+      jobId: data.job_id,
+      totalPages: data.total_pages,
+      pages: data.pages.map((page: any) => ({
+        pageNum: page.page_num,
+        text: page.text,
+        images: page.images || [],
+        title: page.title,
+        bulletPoints: page.bullet_points || []
+      })),
+      status: 'extracted'
+    }
   }
 
   /**

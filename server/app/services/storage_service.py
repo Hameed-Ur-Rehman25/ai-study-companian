@@ -25,12 +25,11 @@ class StorageService:
         for directory in [self.upload_dir, self.output_dir, self.temp_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
-    def save_uploaded_file(self, file_content: bytes, filename: str) -> str:
+    def save_uploaded_file(self, file_content: bytes, filename: str, job_id: str) -> str:
         """
         Save uploaded PDF file
         Returns the file path
         """
-        job_id = str(uuid.uuid4())
         job_dir = self.upload_dir / job_id
         job_dir.mkdir(exist_ok=True)
         

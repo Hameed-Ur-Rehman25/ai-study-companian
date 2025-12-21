@@ -19,18 +19,18 @@ class GeminiService:
             genai.configure(api_key=self.api_key)
             logger.info("Gemini API configured")
 
-    def get_model(self, model_name: str = "gemini-1.5-flash"):
+    def get_model(self, model_name: str = "gemini-2.5-flash"):
         """Get Gemini model instance"""
         if not self.api_key:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
         return genai.GenerativeModel(model_name)
 
-    async def chat_with_pdf(self, pdf_text: str, messages: List[Dict[str, str]]) -> str:
+    async def chat_with_pdf(self, context: str, messages: List[Dict[str, str]]) -> str:
         """
-        Chat with a PDF document
+        Chat with a PDF document using provided context
         
         Args:
-            pdf_text: Text content of the PDF
+            context: Relevant text context from the PDF (pre-chunked)
             messages: List of message dictionaries {'role': 'user'|'model', 'content': '...'}
         """
         try:
@@ -41,7 +41,7 @@ class GeminiService:
             history = [
                 {
                     "role": "user",
-                    "parts": [f"Here is the content of a PDF document I want to discuss:\n\n{pdf_text[:30000]}... (truncated if too long)\n\nPlease answer my questions based on this document."]
+                    "parts": [f"Here is relevant content from a PDF document I want to discuss:\n\n{context}\n\nPlease answer my questions based on this document content."]
                 },
                 {
                     "role": "model",
