@@ -305,7 +305,11 @@ const ConvertPDFToVideo: NextPage = () => {
 
               <MotionWrapper
                 as="button"
-                onClick={handleConvert}
+                type="button"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault()
+                  handleConvert()
+                }}
                 className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
