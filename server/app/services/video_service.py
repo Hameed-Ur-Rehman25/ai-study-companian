@@ -12,6 +12,11 @@ from PIL import Image
 import fitz  # PyMuPDF
 from app.services.storage_service import StorageService
 
+# Fix for Pillow 10+ compatibility (Image.ANTIALIAS was removed)
+# MoviePy still uses the old constant, so we monkey-patch it
+if not hasattr(Image, 'ANTIALIAS'):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
+
 logger = logging.getLogger(__name__)
 
 

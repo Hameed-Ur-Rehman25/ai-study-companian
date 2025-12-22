@@ -6,16 +6,21 @@ import { Footer } from '../../components/Footer'
 import { PDFUpload } from '../../components/PDFUpload'
 import { ConversionProgress } from '../../components/ConversionProgress'
 import { VideoPreview } from '../../components/VideoPreview'
+import { ProcessingAnimation } from '../../components/animations/ProcessingAnimation'
 import { PDFConversionController } from '../../controllers/PDFConversionController'
 import { PDFFile, ConversionOptions, ConversionStatus } from '../../models/Conversion'
-import { Settings, Play } from 'lucide-react'
+import { Settings, Play, CheckCircle } from 'lucide-react'
 import { MotionWrapper } from '../../components/ui/MotionWrapper'
+
+type ProcessStage = 'uploading' | 'extracting' | 'processing' | null
 
 const ConvertPDFToVideo: NextPage = () => {
   const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
+  const [processingStage, setProcessingStage] = useState<ProcessStage>(null)
+  const [processingProgress, setProcessingProgress] = useState(0)
   const [conversionStatus, setConversionStatus] = useState<ConversionStatus | null>(null)
   const [showOptions, setShowOptions] = useState(false)
   const [options, setOptions] = useState<ConversionOptions>({
@@ -44,13 +49,33 @@ const ConvertPDFToVideo: NextPage = () => {
       setIsUploading(true)
       setError(null)
 
+      // Stage 1: Uploading
+      setProcessingStage('uploading')
+      setProcessingProgress(10)
+
       const response = await PDFConversionController.uploadPDF(selectedFile.file)
       setJobId(response.jobId)
 
+      setProcessingProgress(40)
+
+      // Stage 2: Extracting
+      setProcessingStage('extracting')
+      setProcessingProgress(50)
+
       // Automatically start extraction
       await PDFConversionController.extractContent(response.jobId)
+
+      setProcessingProgress(100)
+
+      // Clear processing state after complete
+      setTimeout(() => {
+        setProcessingStage(null)
+        setProcessingProgress(0)
+      }, 500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload PDF')
+      setProcessingStage(null)
+      setProcessingProgress(0)
     } finally {
       setIsUploading(false)
     }
@@ -219,7 +244,7 @@ const ConvertPDFToVideo: NextPage = () => {
               </MotionWrapper>
 
               {/* Upload Button */}
-              {selectedFile && (
+              {selectedFile && !isUploading && (
                 <MotionWrapper
                   as="button"
                   onClick={handleUpload}
@@ -228,18 +253,18 @@ const ConvertPDFToVideo: NextPage = () => {
                   whileHover={{ scale: isUploading ? 1 : 1.02 }}
                   whileTap={{ scale: isUploading ? 1 : 0.98 }}
                 >
-                  {isUploading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Play size={20} />
-                      Upload & Start Conversion
-                    </>
-                  )}
+                  <Play size={20} />
+                  Upload & Start Conversion
                 </MotionWrapper>
+              )}
+
+              {/* Processing Animation */}
+              {isUploading && processingStage && (
+                <ProcessingAnimation
+                  stage={processingStage}
+                  progress={processingProgress}
+                  fileName={selectedFile?.file?.name}
+                />
               )}
 
               {error && (
@@ -261,16 +286,31 @@ const ConvertPDFToVideo: NextPage = () => {
 
           {/* Start Conversion Button (after upload) */}
           {jobId && !isConverting && !conversionStatus && (
-            <MotionWrapper
-              as="button"
-              onClick={handleConvert}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Play size={20} />
-              Start Conversion
-            </MotionWrapper>
+            <div className="space-y-4">
+              {/* Success message showing file is ready */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-green-700">
+                  <CheckCircle size={20} />
+                  <div>
+                    <p className="font-semibold">PDF Uploaded Successfully!</p>
+                    <p className="text-sm text-green-600">
+                      File ready for conversion. Click below to start.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <MotionWrapper
+                as="button"
+                onClick={handleConvert}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Play size={20} />
+                Start Video Conversion
+              </MotionWrapper>
+            </div>
           )}
 
           {/* Video Preview */}
