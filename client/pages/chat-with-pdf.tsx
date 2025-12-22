@@ -160,7 +160,19 @@ const ChatWithPDF: NextPage = () => {
         }
     }
 
-    const handleNewChat = async () => {
+    const handleNewChat = () => {
+        // Clear everything to allow uploading a new PDF
+        setJobId(null)
+        setSelectedFile(null)
+        setMessages([])
+        setCurrentSessionId(null)
+        setSessions([])
+        setInputValue('')
+        setIsSidebarOpen(false)
+        setError(null)
+    }
+
+    const handleNewSessionWithSamePDF = async () => {
         if (!jobId || !selectedFile?.file) return
 
         try {
@@ -257,6 +269,7 @@ const ChatWithPDF: NextPage = () => {
                                 currentSessionId={currentSessionId}
                                 onSessionSelect={loadSession}
                                 onNewChat={handleNewChat}
+                                onNewSession={handleNewSessionWithSamePDF}
                                 isOpen={isSidebarOpen}
                                 onClose={() => setIsSidebarOpen(false)}
                             />

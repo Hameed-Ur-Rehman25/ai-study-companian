@@ -8,6 +8,7 @@ interface ChatHistorySidebarProps {
     currentSessionId: string | null
     onSessionSelect: (sessionId: string) => void
     onNewChat: () => void
+    onNewSession?: () => void
     isOpen: boolean
     onClose: () => void
 }
@@ -17,6 +18,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     currentSessionId,
     onSessionSelect,
     onNewChat,
+    onNewSession,
     isOpen,
     onClose
 }) => {
@@ -50,13 +52,24 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                 <X size={20} />
                             </button>
                         </div>
-                        <button
-                            onClick={onNewChat}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                        >
-                            <Plus size={16} />
-                            New Chat
-                        </button>
+                        <div className="space-y-2">
+                            <button
+                                onClick={onNewChat}
+                                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                            >
+                                <Plus size={16} />
+                                Upload New PDF
+                            </button>
+                            {onNewSession && (
+                                <button
+                                    onClick={onNewSession}
+                                    className="w-full px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                                >
+                                    <MessageSquare size={16} />
+                                    New Session (Same PDF)
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Sessions List */}
