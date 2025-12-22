@@ -10,6 +10,8 @@ import { PDFFile } from '../models/Conversion'
 import { MessageCircle, Send, Menu } from 'lucide-react'
 import { MotionWrapper } from '../components/ui/MotionWrapper'
 import { ChatHistorySidebar } from '../components/ChatHistorySidebar'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const ChatWithPDF: NextPage = () => {
     const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
@@ -304,7 +306,15 @@ const ChatWithPDF: NextPage = () => {
                                                     : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
                                                     }`}
                                             >
-                                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                                {msg.role === 'user' ? (
+                                                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                                ) : (
+                                                    <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:mb-2 prose-headings:mt-3">
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                            {msg.content}
+                                                        </ReactMarkdown>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

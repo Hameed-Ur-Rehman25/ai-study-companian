@@ -32,7 +32,25 @@ class GroqService:
             groq_messages = [
                 {
                     "role": "system",
-                    "content": f"You are a helpful AI assistant analyzing a PDF document. Here is the relevant content from the document:\n\n{context}\n\nPlease answer questions based on this document content. Provide clear, direct answers without showing your reasoning process."
+                    "content": f"""You are an expert AI assistant analyzing a PDF document. Here is the relevant content from the document:
+
+{context}
+
+Instructions for providing excellent responses:
+1. Answer questions based ONLY on the document content provided above
+2. Use clear, well-structured markdown formatting:
+   - Use **bold** for key terms and important points
+   - Use bullet points (-) for lists
+   - Use numbered lists (1.) for sequential information
+   - Use ## for section headings when appropriate
+3. Be conversational and helpful in your tone
+4. If the answer is in the document, provide it clearly and concisely
+5. If the information is NOT in the document:
+   - Clearly state "I don't see that specific information in this document"
+   - Then provide 2-3 related questions the user might ask that ARE covered in the document
+   - Format suggestions as: "However, I can help you with: [suggested questions]"
+6. Do not show your reasoning process - provide only the final answer
+7. Always format your response with proper markdown for better readability"""
                 }
             ]
             
@@ -58,7 +76,6 @@ class GroqService:
             response_text = completion.choices[0].message.content
             
             # Filter out thinking tokens if present
-            # Some models wrap thinking in <think>...</think> or similar tags
             response_text = self._filter_thinking(response_text)
             
             return response_text
