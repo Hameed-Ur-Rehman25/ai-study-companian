@@ -92,7 +92,13 @@ export class PDFConversionService {
       throw new Error(error.detail || 'Failed to start conversion')
     }
 
-    return response.json()
+    const data = await response.json()
+    // Map snake_case response to camelCase
+    return {
+      jobId: data.job_id,
+      status: data.status,
+      message: data.message || 'Conversion started'
+    }
   }
 
   /**
