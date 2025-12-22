@@ -10,13 +10,18 @@ import { PDFFile } from '../models/Conversion'
 import { MessageCircle, Send, Menu } from 'lucide-react'
 import { MotionWrapper } from '../components/ui/MotionWrapper'
 import { ChatHistorySidebar } from '../components/ChatHistorySidebar'
+import { ProcessingAnimation } from '../components/animations/ProcessingAnimation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+
+type ProcessStage = 'uploading' | 'extracting' | 'processing' | null
 
 const ChatWithPDF: NextPage = () => {
     const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
     const [jobId, setJobId] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [processingStage, setProcessingStage] = useState<ProcessStage>(null)
+    const [processingProgress, setProcessingProgress] = useState(0)
     const [error, setError] = useState<string | null>(null)
 
     // Chat state
@@ -90,16 +95,34 @@ const ChatWithPDF: NextPage = () => {
             setIsUploading(true)
             setError(null)
 
+            // Stage 1: Uploading
+            setProcessingStage('uploading')
+            setProcessingProgress(10)
+
             const response = await PDFConversionController.uploadPDF(selectedFile.file)
             const newJobId = response.jobId
             setJobId(newJobId)
 
+            setProcessingProgress(40)
+
+            // Stage 2: Extracting
+            setProcessingStage('extracting')
+            setProcessingProgress(50)
+
             // Automatically start extraction
             await PDFConversionController.extractContent(newJobId)
+
+            setProcessingProgress(70)
+
+            // Stage 3: Processing
+            setProcessingStage('processing')
+            setProcessingProgress(80)
 
             // Create initial session
             const session = await ChatController.createNewSession(newJobId, selectedFile.file.name)
             setCurrentSessionId(session.session_id)
+
+            setProcessingProgress(95)
 
             // Add initial greeting
             setMessages([{
@@ -109,8 +132,19 @@ const ChatWithPDF: NextPage = () => {
 
             // Reload sessions list
             await loadSessions()
+
+            setProcessingProgress(100)
+
+            // Small delay to show 100% completion
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            // Clear processing stage
+            setProcessingStage(null)
+            setProcessingProgress(0)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to upload PDF')
+            setProcessingStage(null)
+            setProcessingProgress(0)
         } finally {
             setIsUploading(false)
         }
@@ -212,54 +246,72 @@ const ChatWithPDF: NextPage = () => {
                     {!jobId ? (
                         // Upload View
                         <div className="max-w-2xl mx-auto">
-                            <MotionWrapper
-                                as="div"
-                                className="text-center mb-8"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6 }}
-                            >
-                                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                                    Chat with PDF
-                                </h1>
-                                <p className="text-lg text-gray-600">
-                                    Upload a PDF and ask questions to get instant answers
-                                </p>
-                            </MotionWrapper>
-
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <PDFUpload onFileSelect={handleFileSelect} />
-
-                                {selectedFile && (
+                            {processingStage ? (
+                                // Show processing animation
+                                <MotionWrapper
+                                    as="div"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <ProcessingAnimation
+                                        stage={processingStage}
+                                        fileName={selectedFile?.file?.name}
+                                        progress={processingProgress}
+                                    />
+                                </MotionWrapper>
+                            ) : (
+                                <>
                                     <MotionWrapper
                                         as="div"
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="mt-6"
+                                        className="text-center mb-8"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.6 }}
                                     >
-                                        <button
-                                            onClick={handleUpload}
-                                            disabled={isUploading}
-                                            className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
-                                        >
-                                            {isUploading ? (
-                                                <>
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                    Uploading...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <MessageCircle size={20} />
-                                                    Start Chatting
-                                                </>
-                                            )}
-                                        </button>
-                                        {error && (
-                                            <p className="mt-3 text-red-600 text-sm text-center">{error}</p>
-                                        )}
+                                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                                            Chat with PDF
+                                        </h1>
+                                        <p className="text-lg text-gray-600">
+                                            Upload a PDF and ask questions to get instant answers
+                                        </p>
                                     </MotionWrapper>
-                                )}
-                            </div>
+
+                                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                                        <PDFUpload onFileSelect={handleFileSelect} />
+
+                                        {selectedFile && (
+                                            <MotionWrapper
+                                                as="div"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="mt-6"
+                                            >
+                                                <button
+                                                    onClick={handleUpload}
+                                                    disabled={isUploading}
+                                                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+                                                >
+                                                    {isUploading ? (
+                                                        <>
+                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            Processing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <MessageCircle size={20} />
+                                                            Start Chatting
+                                                        </>
+                                                    )}
+                                                </button>
+                                                {error && (
+                                                    <p className="mt-3 text-red-600 text-sm text-center">{error}</p>
+                                                )}
+                                            </MotionWrapper>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ) : (
                         // Chat Interface with Sidebar

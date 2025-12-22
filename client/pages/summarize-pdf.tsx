@@ -8,14 +8,19 @@ import { PDFConversionController } from '../controllers/PDFConversionController'
 import { PDFFile } from '../models/Conversion'
 import { Sparkles, RefreshCw, FileText } from 'lucide-react'
 import { MotionWrapper } from '../components/ui/MotionWrapper'
+import { ProcessingAnimation } from '../components/animations/ProcessingAnimation'
 import { API_BASE_URL } from '../config/api'
 import ReactMarkdown from 'react-markdown'
+
+type ProcessStage = 'uploading' | 'extracting' | 'processing' | null
 
 const SummarizePDF: NextPage = () => {
     const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
     const [jobId, setJobId] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [isSummarizing, setIsSummarizing] = useState(false)
+    const [processingStage, setProcessingStage] = useState<ProcessStage>(null)
+    const [processingProgress, setProcessingProgress] = useState(0)
     const [summary, setSummary] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
 
@@ -35,16 +40,32 @@ const SummarizePDF: NextPage = () => {
             setIsUploading(true)
             setError(null)
 
+            // Stage 1: Uploading
+            setProcessingStage('uploading')
+            setProcessingProgress(10)
+
             // 1. Upload
             const response = await PDFConversionController.uploadPDF(selectedFile.file)
             const newJobId = response.jobId
             setJobId(newJobId)
+
+            setProcessingProgress(35)
+
+            // Stage 2: Extracting
+            setProcessingStage('extracting')
+            setProcessingProgress(40)
 
             // 2. Extract
             await PDFConversionController.extractContent(newJobId)
 
             setIsUploading(false)
             setIsSummarizing(true)
+
+            setProcessingProgress(65)
+
+            // Stage 3: Processing (Summarizing)
+            setProcessingStage('processing')
+            setProcessingProgress(70)
 
             // 3. Summarize
             const summaryResponse = await fetch(`${API_BASE_URL}/api/ai/summary`, {
@@ -61,12 +82,25 @@ const SummarizePDF: NextPage = () => {
                 throw new Error('Failed to generate summary')
             }
 
+            setProcessingProgress(95)
+
             const data = await summaryResponse.json()
             setSummary(data.summary)
+
+            setProcessingProgress(100)
+
+            // Small delay to show 100% completion
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            // Clear processing stage
+            setProcessingStage(null)
+            setProcessingProgress(0)
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to process PDF')
             setIsUploading(false)
+            setProcessingStage(null)
+            setProcessingProgress(0)
         } finally {
             setIsSummarizing(false)
         }
@@ -92,62 +126,80 @@ const SummarizePDF: NextPage = () => {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl py-8 sm:py-12">
                     {!summary ? (
                         <div className="max-w-2xl mx-auto">
-                            <MotionWrapper
-                                as="div"
-                                className="text-center mb-8"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6 }}
-                            >
-                                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-2xl mb-4">
-                                    <Sparkles size={32} className="text-emerald-600" />
-                                </div>
-                                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                                    Summarize PDF
-                                </h1>
-                                <p className="text-lg text-gray-600">
-                                    Get instant, AI-powered summaries of long documents
-                                </p>
-                            </MotionWrapper>
-
-                            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                                <PDFUpload onFileSelect={handleFileSelect} />
-
-                                {selectedFile && (
+                            {processingStage ? (
+                                // Show processing animation
+                                <MotionWrapper
+                                    as="div"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <ProcessingAnimation
+                                        stage={processingStage}
+                                        fileName={selectedFile?.file?.name}
+                                        progress={processingProgress}
+                                    />
+                                </MotionWrapper>
+                            ) : (
+                                <>
                                     <MotionWrapper
                                         as="div"
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="mt-6"
+                                        className="text-center mb-8"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.6 }}
                                     >
-                                        <button
-                                            onClick={handleUploadAndSummarize}
-                                            disabled={isUploading || isSummarizing}
-                                            className="w-full px-6 py-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
-                                        >
-                                            {isUploading ? (
-                                                <>
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                    Uploading & Processing...
-                                                </>
-                                            ) : isSummarizing ? (
-                                                <>
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                    Generating Summary...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Sparkles size={20} />
-                                                    Summarize Document
-                                                </>
-                                            )}
-                                        </button>
-                                        {error && (
-                                            <p className="mt-4 text-red-600 text-sm text-center bg-red-50 py-2 rounded-lg">{error}</p>
-                                        )}
+                                        <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-2xl mb-4">
+                                            <Sparkles size={32} className="text-emerald-600" />
+                                        </div>
+                                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                                            Summarize PDF
+                                        </h1>
+                                        <p className="text-lg text-gray-600">
+                                            Get instant, AI-powered summaries of long documents
+                                        </p>
                                     </MotionWrapper>
-                                )}
-                            </div>
+
+                                    <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+                                        <PDFUpload onFileSelect={handleFileSelect} />
+
+                                        {selectedFile && (
+                                            <MotionWrapper
+                                                as="div"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="mt-6"
+                                            >
+                                                <button
+                                                    onClick={handleUploadAndSummarize}
+                                                    disabled={isUploading || isSummarizing}
+                                                    className="w-full px-6 py-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+                                                >
+                                                    {isUploading ? (
+                                                        <>
+                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            Processing...
+                                                        </>
+                                                    ) : isSummarizing ? (
+                                                        <>
+                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            Generating Summary...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Sparkles size={20} />
+                                                            Summarize Document
+                                                        </>
+                                                    )}
+                                                </button>
+                                                {error && (
+                                                    <p className="mt-4 text-red-600 text-sm text-center bg-red-50 py-2 rounded-lg">{error}</p>
+                                                )}
+                                            </MotionWrapper>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ) : (
                         // Results View
@@ -161,7 +213,7 @@ const SummarizePDF: NextPage = () => {
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
                                         <FileText className="text-emerald-100" />
-                                        <h2 className="text-2xl font-bold">{selectedFile?.file.name}</h2>
+                                        <h2 className="text-2xl font-bold">{selectedFile?.file?.name}</h2>
                                     </div>
                                     <p className="text-emerald-100 opacity-90">AI Generated Summary</p>
                                 </div>

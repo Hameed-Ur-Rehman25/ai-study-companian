@@ -43,11 +43,11 @@ export function SimpleTasks() {
           Powerful Features for <span className="text-blue-600">Modern Learning</span>
         </h2>
         <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
-          Transform how you interact with PDFs. Our AI-powered features make document management 
+          Transform how you interact with PDFs. Our AI-powered features make document management
           effortless and learning more engaging than ever before.
         </p>
       </MotionWrapper>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {features.map((feature, index) => (
           <MotionWrapper
@@ -71,7 +71,7 @@ export function SimpleTasks() {
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3),transparent_50%)]"></div>
               </div>
-              
+
               <div className="relative z-10">
                 <AnimatedIcon
                   delay={index * 0.15}
@@ -80,23 +80,23 @@ export function SimpleTasks() {
                 >
                   <feature.icon size={24} className="sm:w-7 sm:h-7" />
                 </AnimatedIcon>
-                
+
                 <h3 className="text-lg sm:text-xl font-bold mb-2">{feature.title}</h3>
                 <p className={`${feature.textColor} text-xs sm:text-sm mb-4 leading-relaxed`}>
                   {feature.description}
                 </p>
-                
+
                 <MotionWrapper
                   as="button"
                   className="flex items-center gap-2 text-white text-sm sm:text-base font-medium"
                   whileHover={{ x: 5 }}
                   transition={{ type: 'spring', stiffness: 400 }}
                 >
-                  Learn More 
+                  Learn More
                   <MotionWrapper
                     as="span"
                     animate={{ x: [0, 5, 0] }}
-                    transition={{ 
+                    transition={{
                       duration: 1.5,
                       repeat: Infinity,
                       ease: 'easeInOut'
@@ -106,14 +106,14 @@ export function SimpleTasks() {
                   </MotionWrapper>
                 </MotionWrapper>
               </div>
-              
+
               {/* Glow effect */}
               <div className={`absolute -inset-1 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-30 blur-xl transition-opacity rounded-2xl`}></div>
             </TiltCard>
           </MotionWrapper>
         ))}
       </div>
-      
+
       {/* Feature showcase with image */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="grid lg:grid-cols-2">
@@ -122,8 +122,8 @@ export function SimpleTasks() {
               Experience the Future of Document Learning
             </h3>
             <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
-              Our platform combines cutting-edge AI technology with intuitive design to revolutionize 
-              how you work with PDFs. Whether you're a student, educator, or professional, our tools 
+              Our platform combines cutting-edge AI technology with intuitive design to revolutionize
+              how you work with PDFs. Whether you&apos;re a student, educator, or professional, our tools
               adapt to your needs.
             </p>
             <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
@@ -160,7 +160,7 @@ export function SimpleTasks() {
             </button>
           </div>
           <div className="relative h-64 sm:h-80 lg:h-auto order-1 lg:order-2">
-            <ImageWithFallback 
+            <ImageWithFallback
               src="https://images.unsplash.com/photo-1560264401-b76ed96f3134?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aWRlbyUyMGNvbmZlcmVuY2UlMjBwcmVzZW50YXRpb258ZW58MXx8fHwxNzY0MjQ0OTEzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
               alt="Video presentation showing AI-powered document learning platform"
               className="w-full h-full object-cover"

@@ -23,16 +23,17 @@ export const MotionWrapper = forwardRef<HTMLElement, MotionWrapperProps>(
     useEffect(() => {
       // Only run on client after mount (post-hydration)
       setMounted(true)
-      
+
       // Load motion after hydration
       import('framer-motion')
         .then((mod) => {
           // framer-motion exports motion as a named export
           const motionExport = mod?.motion || mod?.default?.motion
-          
+
           if (motionExport && typeof motionExport === 'object' && motionExport !== null) {
             // Verify motion has the expected structure (has div, button, or span)
-            if (motionExport.div || motionExport.button || motionExport.span) {
+            const motionObj = motionExport as Record<string, any>
+            if (motionObj.div || motionObj.button || motionObj.span) {
               setMotion(motionExport)
             } else {
               console.warn('framer-motion loaded but missing expected components')
@@ -74,18 +75,18 @@ export const MotionWrapper = forwardRef<HTMLElement, MotionWrapperProps>(
     if (mounted && motion && typeof motion === 'object' && motion !== null) {
       try {
         const motionObj = motion as any
-        
+
         // framer-motion supports motion.div, motion.button, motion.span, etc.
         // For elements that don't have a direct motion component, use motion.div
         const supportedElements = ['div', 'span', 'button', 'a', 'section', 'article', 'header', 'footer', 'nav', 'main']
         const hasDirectSupport = supportedElements.includes(as as string)
-        
+
         // Get the motion component - prefer direct support, fallback to div
         let MotionComponent = hasDirectSupport ? motionObj[as] : null
         if (!MotionComponent || typeof MotionComponent !== 'function') {
           MotionComponent = motionObj.div
         }
-        
+
         // Verify it's a valid React component before using
         if (MotionComponent && typeof MotionComponent === 'function' && MotionComponent !== null) {
           // Use motion.div with custom component prop for unsupported elements
