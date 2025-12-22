@@ -10,13 +10,12 @@ from pathlib import Path
 from app.models.video_models import ConversionStatusResponse, VideoResponse, VideoPreviewResponse
 from app.services.storage_service import StorageService
 from app.api.dependencies import get_storage_service
+# Import shared job_statuses from conversion_service
+from app.services.conversion_service import job_statuses
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/video", tags=["Video"])
-
-# In-memory job status storage (in production, use Redis or database)
-job_statuses = {}
 
 
 @router.get("/status/{job_id}")
