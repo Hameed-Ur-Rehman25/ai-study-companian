@@ -113,35 +113,79 @@ Instructions for providing excellent responses:
         
         return text
 
-    async def summarize_pdf(self, pdf_text: str) -> str:
+    async def summarize_pdf(self, pdf_text: str, length: str = "standard") -> str:
         """
-        Generate a summary of the PDF document
+        Generate a summary of the PDF document with specified length
+        
+        Args:
+            pdf_text: The full text content of the PDF
+            length: Summary length - 'brief', 'standard', or 'detailed'
         """
         try:
-            prompt = f"""
-            Please provide a comprehensive summary of the following document. 
-            Include the main topics, key points, and overall conclusion.
-            Format the output with Markdown headings and bullet points.
-            Provide only the summary without showing your reasoning process.
+            # Define prompts and settings for each length
+            length_configs = {
+                "brief": {
+                    "prompt": """Provide a BRIEF summary (200-300 words) with only the most important points.
+Focus on the absolute essentials and main takeaways.
+Use bullet points for clarity.
+Be concise and direct.
+Provide only the summary without showing your reasoning process.""",
+                    "max_tokens": 512
+                },
+                "standard": {
+                    "prompt": """Provide a comprehensive summary (500-800 words) covering:
+- Main topics and themes
+- Key points and important details
+- Overall conclusion and implications
+
+Use proper Markdown formatting with headings (##) and bullet points.
+Structure your summary logically for easy reading.
+Provide only the summary without showing your reasoning process.""",
+                    "max_tokens": 1024
+                },
+                "detailed": {
+                    "prompt": """Provide a DETAILED and comprehensive summary (1000-1500 words) that includes:
+- In-depth analysis of main topics and themes
+- Key points with supporting details and examples
+- Important context and background information
+- Thorough explanations of complex concepts
+- Overall conclusion and broader implications
+
+Use proper Markdown formatting with:
+- Main headings (##) for major sections
+- Subheadings (###) for subsections
+- Bullet points for lists
+- **Bold** for emphasis on key terms
+
+Provide a well-structured, comprehensive analysis.
+Provide only the summary without showing your reasoning process.""",
+                    "max_tokens": 2048
+                }
+            }
             
-            Document Content:
-            {pdf_text[:30000]}... (truncated if too long)
-            """
+            # Get config for requested length (default to standard if invalid)
+            config = length_configs.get(length, length_configs["standard"])
+            
+            full_prompt = f"""{config["prompt"]}
+
+Document Content:
+{pdf_text[:30000]}... (truncated if too long)
+"""
             
             completion = self.client.chat.completions.create(
                 model="qwen/qwen3-32b",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful AI assistant that provides clear, concise summaries. Do not include your reasoning process in the response."
+                        "content": "You are a helpful AI assistant that provides clear, well-structured summaries. Do not include your reasoning process in the response."
                     },
                     {
                         "role": "user",
-                        "content": prompt
+                        "content": full_prompt
                     }
                 ],
                 temperature=0.6,
-                max_completion_tokens=4096,
+                max_completion_tokens=config["max_tokens"],
                 top_p=0.95,
                 stream=False,
                 stop=None

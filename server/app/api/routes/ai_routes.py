@@ -24,6 +24,7 @@ class ChatRequest(BaseModel):
 
 class SummaryRequest(BaseModel):
     job_id: str
+    length: str = "standard"  # brief, standard, detailed
 
 def get_ai_service():
     """Get AI service (using Groq)"""
@@ -107,9 +108,17 @@ async def summarize_pdf(
     ai_service: GroqService = Depends(get_ai_service)
 ):
     """
-    Summarize a PDF document
+    Summarize a PDF document with specified length
     """
     try:
+        # Validate length parameter
+        valid_lengths = ['brief', 'standard', 'detailed']
+        if request.length not in valid_lengths:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid length. Must be one of: {', '.join(valid_lengths)}"
+            )
+        
         # Get PDF content
         upload_dir = storage_service.get_job_dir(request.job_id, "upload")
         pdf_files = list(upload_dir.glob("*.pdf"))
@@ -126,8 +135,8 @@ async def summarize_pdf(
         if not full_text.strip():
             raise HTTPException(status_code=400, detail="Could not extract text from PDF")
             
-        # Get summary from AI service
-        summary = await ai_service.summarize_pdf(full_text)
+        # Get summary from AI service with specified length
+        summary = await ai_service.summarize_pdf(full_text, length=request.length)
         
         return {"summary": summary}
         

@@ -6,13 +6,14 @@ import { Footer } from '../components/Footer'
 import { PDFUpload } from '../components/PDFUpload'
 import { PDFConversionController } from '../controllers/PDFConversionController'
 import { PDFFile } from '../models/Conversion'
-import { Sparkles, RefreshCw, FileText } from 'lucide-react'
+import { Sparkles, RefreshCw, FileText, AlignLeft, BookOpen } from 'lucide-react'
 import { MotionWrapper } from '../components/ui/MotionWrapper'
 import { ProcessingAnimation } from '../components/animations/ProcessingAnimation'
 import { API_BASE_URL } from '../config/api'
 import ReactMarkdown from 'react-markdown'
 
 type ProcessStage = 'uploading' | 'extracting' | 'processing' | null
+type SummaryLength = 'brief' | 'standard' | 'detailed'
 
 const SummarizePDF: NextPage = () => {
     const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
@@ -21,6 +22,7 @@ const SummarizePDF: NextPage = () => {
     const [isSummarizing, setIsSummarizing] = useState(false)
     const [processingStage, setProcessingStage] = useState<ProcessStage>(null)
     const [processingProgress, setProcessingProgress] = useState(0)
+    const [summaryLength, setSummaryLength] = useState<SummaryLength>('standard')
     const [summary, setSummary] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
 
@@ -74,7 +76,8 @@ const SummarizePDF: NextPage = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    job_id: newJobId
+                    job_id: newJobId,
+                    length: summaryLength
                 }),
             })
 
@@ -162,6 +165,119 @@ const SummarizePDF: NextPage = () => {
 
                                     <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
                                         <PDFUpload onFileSelect={handleFileSelect} />
+
+                                        {/* Summary Length Selector */}
+                                        {selectedFile && (
+                                            <MotionWrapper
+                                                as="div"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="mt-6"
+                                            >
+                                                <div className="mb-6">
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                        Summary Length
+                                                    </label>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                        {/* Brief Option */}
+                                                        <button
+                                                            onClick={() => setSummaryLength('brief')}
+                                                            className={`relative p-4 rounded-xl border-2 transition-all text-left ${summaryLength === 'brief'
+                                                                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                                                                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${summaryLength === 'brief'
+                                                                        ? 'bg-blue-500 text-white'
+                                                                        : 'bg-blue-100 text-blue-600'
+                                                                    }`}>
+                                                                    <AlignLeft size={20} />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                                                                        Brief
+                                                                        {summaryLength === 'brief' && (
+                                                                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                                                        )}
+                                                                    </h4>
+                                                                    <p className="text-xs text-gray-600 mb-2">
+                                                                        Key points only
+                                                                    </p>
+                                                                    <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                                                        ~250 words
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+
+                                                        {/* Standard Option */}
+                                                        <button
+                                                            onClick={() => setSummaryLength('standard')}
+                                                            className={`relative p-4 rounded-xl border-2 transition-all text-left ${summaryLength === 'standard'
+                                                                    ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                                                                    : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${summaryLength === 'standard'
+                                                                        ? 'bg-emerald-500 text-white'
+                                                                        : 'bg-emerald-100 text-emerald-600'
+                                                                    }`}>
+                                                                    <FileText size={20} />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                                                                        Standard
+                                                                        {summaryLength === 'standard' && (
+                                                                            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                                                                        )}
+                                                                    </h4>
+                                                                    <p className="text-xs text-gray-600 mb-2">
+                                                                        Balanced detail
+                                                                    </p>
+                                                                    <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium">
+                                                                        ~650 words
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+
+                                                        {/* Detailed Option */}
+                                                        <button
+                                                            onClick={() => setSummaryLength('detailed')}
+                                                            className={`relative p-4 rounded-xl border-2 transition-all text-left ${summaryLength === 'detailed'
+                                                                    ? 'border-purple-500 bg-purple-50 shadow-md'
+                                                                    : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-start gap-3">
+                                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${summaryLength === 'detailed'
+                                                                        ? 'bg-purple-500 text-white'
+                                                                        : 'bg-purple-100 text-purple-600'
+                                                                    }`}>
+                                                                    <BookOpen size={20} />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                                                                        Detailed
+                                                                        {summaryLength === 'detailed' && (
+                                                                            <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                                                                        )}
+                                                                    </h4>
+                                                                    <p className="text-xs text-gray-600 mb-2">
+                                                                        Comprehensive
+                                                                    </p>
+                                                                    <span className="inline-block px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                                                                        ~1250 words
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </MotionWrapper>
+                                        )}
 
                                         {selectedFile && (
                                             <MotionWrapper
