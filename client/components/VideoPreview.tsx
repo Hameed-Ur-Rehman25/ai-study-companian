@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Download, Play, Pause, Loader2, AlertCircle } from 'lucide-react'
 import { MotionWrapper } from './ui/MotionWrapper'
 import { PDFConversionController } from '../controllers/PDFConversionController'
@@ -13,7 +13,7 @@ export function VideoPreview({ jobId, className = '' }: VideoPreviewProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const videoRef = useState<HTMLVideoElement | null>(null)[0]
+  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
     const loadVideo = async () => {
@@ -46,11 +46,11 @@ export function VideoPreview({ jobId, className = '' }: VideoPreviewProps) {
   }
 
   const handlePlayPause = () => {
-    if (videoRef) {
+    if (videoRef.current) {
       if (isPlaying) {
-        videoRef.pause()
+        videoRef.current.pause()
       } else {
-        videoRef.play()
+        videoRef.current.play()
       }
       setIsPlaying(!isPlaying)
     }
@@ -89,8 +89,8 @@ export function VideoPreview({ jobId, className = '' }: VideoPreviewProps) {
       <div className="relative bg-black">
         <video
           ref={(el) => {
+            videoRef.current = el
             if (el) {
-              (videoRef as any) = el
               el.addEventListener('play', () => setIsPlaying(true))
               el.addEventListener('pause', () => setIsPlaying(false))
             }
