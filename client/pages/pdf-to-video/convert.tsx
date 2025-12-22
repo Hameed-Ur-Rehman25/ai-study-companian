@@ -88,11 +88,14 @@ const ConvertPDFToVideo: NextPage = () => {
     }
 
     try {
+      console.log('Starting conversion with jobId:', jobId, 'options:', options)
       setIsConverting(true)
       setError(null)
 
-      await PDFConversionController.startConversion(jobId, options)
+      const result = await PDFConversionController.startConversion(jobId, options)
+      console.log('Conversion started:', result)
     } catch (err) {
+      console.error('Conversion error:', err)
       setError(err instanceof Error ? err.message : 'Failed to start conversion')
       setIsConverting(false)
     }
