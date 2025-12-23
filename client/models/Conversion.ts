@@ -6,10 +6,7 @@ export interface PDFFile {
 }
 
 export interface ConversionOptions {
-  voiceName?: string
-  languageCode?: string
-  speakingRate?: number
-  pitch?: number
+  voiceId?: string
   videoQuality?: 'low' | 'medium' | 'high'
   includeAnimations?: boolean
   includeTransitions?: boolean

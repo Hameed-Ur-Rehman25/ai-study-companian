@@ -24,10 +24,7 @@ const ConvertPDFToVideo: NextPage = () => {
   const [conversionStatus, setConversionStatus] = useState<ConversionStatus | null>(null)
   const [showOptions, setShowOptions] = useState(false)
   const [options, setOptions] = useState<ConversionOptions>({
-    voiceName: 'en-US-Neural2-D',
-    languageCode: 'en-US',
-    speakingRate: 1.0,
-    pitch: 0.0,
+    voiceId: '21m00Tcm4TlvDq8ikWAM',  // Rachel (default)
     videoQuality: 'high',
     includeAnimations: true,
     includeTransitions: true,
@@ -169,14 +166,16 @@ const ConvertPDFToVideo: NextPage = () => {
                           Voice
                         </label>
                         <select
-                          value={options.voiceName}
-                          onChange={(e) => setOptions({ ...options, voiceName: e.target.value })}
+                          value={options.voiceId}
+                          onChange={(e) => setOptions({ ...options, voiceId: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
-                          <option value="en-US-Neural2-D">Male Voice (Neural)</option>
-                          <option value="en-US-Neural2-F">Female Voice (Neural)</option>
-                          <option value="en-US-Standard-D">Male Voice (Standard)</option>
-                          <option value="en-US-Standard-F">Female Voice (Standard)</option>
+                          <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Female)</option>
+                          <option value="29vD33N1CtxCmqQRPOHJ">Drew (Male)</option>
+                          <option value="EXAVITQu4vr4xnSDxMaL">Bella (Female)</option>
+                          <option value="ErXwobaYiN019PkySvjV">Antoni (Male)</option>
+                          <option value="MF3mGyEYCl7XYWbV9V6O">Elli (Female)</option>
+                          <option value="TxGEqnHWrfWFTfGW9XjX">Josh (Male)</option>
                         </select>
                       </div>
 
@@ -198,83 +197,65 @@ const ConvertPDFToVideo: NextPage = () => {
                           <option value="medium">Medium</option>
                           <option value="low">Low</option>
                         </select>
-                      </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Speaking Rate: {options.speakingRate}x
-                        </label>
-                        <input
-                          type="range"
-                          min="0.5"
-                          max="2"
-                          step="0.1"
-                          value={options.speakingRate}
-                          onChange={(e) =>
-                            setOptions({ ...options, speakingRate: parseFloat(e.target.value) })
-                          }
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={options.includeAnimations}
-                            onChange={(e) =>
-                              setOptions({ ...options, includeAnimations: e.target.checked })
-                            }
-                            className="rounded"
-                          />
-                          <span className="text-sm text-gray-700">Animations</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={options.includeTransitions}
-                            onChange={(e) =>
-                              setOptions({ ...options, includeTransitions: e.target.checked })
-                            }
-                            className="rounded"
-                          />
-                          <span className="text-sm text-gray-700">Transitions</span>
-                        </label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={options.includeAnimations}
+                              onChange={(e) =>
+                                setOptions({ ...options, includeAnimations: e.target.checked })
+                              }
+                              className="rounded"
+                            />
+                            <span className="text-sm text-gray-700">Animations</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={options.includeTransitions}
+                              onChange={(e) =>
+                                setOptions({ ...options, includeTransitions: e.target.checked })
+                              }
+                              className="rounded"
+                            />
+                            <span className="text-sm text-gray-700">Transitions</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
-                  </div>
                 )}
-              </MotionWrapper>
+                  </MotionWrapper>
 
               {/* Upload Button */}
-              {selectedFile && !isUploading && (
-                <MotionWrapper
-                  as="button"
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
-                  whileHover={{ scale: isUploading ? 1 : 1.02 }}
-                  whileTap={{ scale: isUploading ? 1 : 0.98 }}
-                >
-                  <Play size={20} />
-                  Upload & Start Conversion
-                </MotionWrapper>
-              )}
+                {selectedFile && !isUploading && (
+                  <MotionWrapper
+                    as="button"
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+                    whileHover={{ scale: isUploading ? 1 : 1.02 }}
+                    whileTap={{ scale: isUploading ? 1 : 0.98 }}
+                  >
+                    <Play size={20} />
+                    Upload & Start Conversion
+                  </MotionWrapper>
+                )}
 
-              {/* Processing Animation */}
-              {isUploading && processingStage && (
-                <ProcessingAnimation
-                  stage={processingStage}
-                  progress={processingProgress}
-                  fileName={selectedFile?.file?.name}
-                />
-              )}
+                {/* Processing Animation */}
+                {isUploading && processingStage && (
+                  <ProcessingAnimation
+                    stage={processingStage}
+                    progress={processingProgress}
+                    fileName={selectedFile?.file?.name}
+                  />
+                )}
 
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
-                  {error}
-                </div>
-              )}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+                    {error}
+                  </div>
+                )}
             </div>
           )}
 

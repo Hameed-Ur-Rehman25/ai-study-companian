@@ -77,10 +77,7 @@ export class PDFConversionService {
       },
       body: JSON.stringify({
         job_id: jobId,
-        voice_name: options.voiceName || 'en-US-Neural2-D',
-        language_code: options.languageCode || 'en-US',
-        speaking_rate: options.speakingRate || 1.0,
-        pitch: options.pitch || 0.0,
+        voice_id: options.voiceId || '21m00Tcm4TlvDq8ikWAM',
         video_quality: options.videoQuality || 'high',
         include_animations: options.includeAnimations !== false,
         include_transitions: options.includeTransitions !== false,
