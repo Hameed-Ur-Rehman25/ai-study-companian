@@ -41,10 +41,7 @@ class ConversionStatus(str, Enum):
 class ConversionRequest(BaseModel):
     """Request model for PDF to video conversion"""
     job_id: str
-    voice_name: Optional[str] = "en-US-Neural2-D"
-    language_code: Optional[str] = "en-US"
-    speaking_rate: Optional[float] = Field(default=1.0, ge=0.25, le=4.0)
-    pitch: Optional[float] = Field(default=0.0, ge=-20.0, le=20.0)
+    voice_id: Optional[str] = "21m00Tcm4TlvDq8ikWAM"  # Default: Rachel
     video_quality: Optional[str] = "high"  # low, medium, high
     include_animations: Optional[bool] = True
     include_transitions: Optional[bool] = True

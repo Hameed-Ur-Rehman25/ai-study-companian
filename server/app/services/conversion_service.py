@@ -87,10 +87,7 @@ class ConversionService:
             audio_files = await self.tts_service.generate_audio_for_pages_async(
                 pages_text=pages_text,
                 job_id=job_id,
-                voice_name=request.voice_name,
-                language_code=request.language_code,
-                speaking_rate=request.speaking_rate,
-                pitch=request.pitch
+                voice_id=request.voice_id
             )
             
             # Step 3: Create video
