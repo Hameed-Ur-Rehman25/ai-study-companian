@@ -23,11 +23,10 @@ export function PopularTools({ tools }: PopularToolsProps) {
         transition={{ duration: 0.6 }}
       >
         <h2 id="popular-tools-heading" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
-          Most Popular <span className="text-blue-600">PDF Tools</span>
+          Your <span className="text-blue-600">AI Study Toolkit</span>
         </h2>
         <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
-          Unlock the full potential of your PDFs with our AI-powered tools. From creating engaging video lectures
-          to instant summaries and intelligent chat features, we&apos;ve got everything you need to work smarter with documents.
+          Three powerful AI features to transform how you learn: create video lectures, chat with documents, and get instant summaries.
         </p>
       </MotionWrapper>
 
@@ -107,13 +106,6 @@ export function PopularTools({ tools }: PopularToolsProps) {
           )
         })}
       </div>
-
-      <div className="text-center mt-6 sm:mt-8">
-        <button className="px-5 sm:px-6 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm sm:text-base transition-colors">
-          See all PDF Tools →
-        </button>
-      </div>
     </section>
   );
 }
-

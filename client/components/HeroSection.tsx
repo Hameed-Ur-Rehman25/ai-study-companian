@@ -26,7 +26,7 @@ export function HeroSection() {
           >
             🚀 Powered by AI Technology
           </MotionWrapper>
-          
+
           <MotionWrapper
             as="h1"
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight"
@@ -34,14 +34,14 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            Transform Your PDFs into<br className="hidden sm:block" />
+            Learn Smarter with<br className="hidden sm:block" />
             <MotionWrapper
               as="span"
               className="text-blue-600 inline-block"
-              animate={{ 
+              animate={{
                 backgroundPosition: ['0%', '100%', '0%'],
               }}
-              transition={{ 
+              transition={{
                 duration: 3,
                 repeat: Infinity,
                 ease: 'linear'
@@ -54,10 +54,10 @@ export function HeroSection() {
                 backgroundClip: 'text',
               }}
             >
-              Interactive Video Lectures
+              AI-Powered PDFs
             </MotionWrapper>
           </MotionWrapper>
-          
+
           <MotionWrapper
             as="p"
             className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6"
@@ -65,9 +65,9 @@ export function HeroSection() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            Experience the future of learning with AI-powered PDF tools. Convert documents to engaging video lectures, chat with your PDFs, and get instant summaries.
+            Turn PDFs into video lectures, chat with your documents using AI, and get instant summaries. Everything you need to study smarter, not harder.
           </MotionWrapper>
-          
+
           <MotionWrapper
             as="div"
             className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-6 sm:mb-8"
@@ -102,7 +102,7 @@ export function HeroSection() {
               Watch Demo Video
             </MotionWrapper>
           </MotionWrapper>
-          
+
           {/* Feature highlights */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
@@ -133,7 +133,7 @@ export function HeroSection() {
             ))}
           </div>
         </MotionWrapper>
-        
+
         {/* Right Image */}
         <MotionWrapper
           as="div"
@@ -150,7 +150,7 @@ export function HeroSection() {
               scale: 1.02,
             }}
           >
-            <ImageWithFallback 
+            <ImageWithFallback
               src="https://images.unsplash.com/photo-1759984782106-4b56d0aa05b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHVkZW50JTIwbGVhcm5pbmclMjBvbmxpbmV8ZW58MXx8fHwxNzY0MTczMzI2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
               alt="Student learning online with AI-powered PDF tools"
               className="w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] object-cover"
@@ -168,7 +168,7 @@ export function HeroSection() {
               </MotionWrapper>
             </div>
           </TiltCard>
-          
+
           {/* Floating stats */}
           <MotionWrapper
             as="div"
@@ -181,10 +181,10 @@ export function HeroSection() {
             <MotionWrapper
               as="div"
               className="text-xl sm:text-2xl font-bold text-blue-600"
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
               }}
-              transition={{ 
+              transition={{
                 duration: 2,
                 repeat: Infinity,
                 repeatType: 'reverse'
@@ -194,7 +194,7 @@ export function HeroSection() {
             </MotionWrapper>
             <div className="text-xs sm:text-sm text-gray-600">Videos Created</div>
           </MotionWrapper>
-          
+
           <MotionWrapper
             as="div"
             className="absolute -top-2 sm:-top-4 -right-2 sm:-right-4 bg-white p-2 sm:p-4 rounded-xl shadow-lg backdrop-blur-sm"
@@ -206,10 +206,10 @@ export function HeroSection() {
             <MotionWrapper
               as="div"
               className="text-xl sm:text-2xl font-bold text-emerald-600"
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
               }}
-              transition={{ 
+              transition={{
                 duration: 2,
                 repeat: Infinity,
                 repeatType: 'reverse',
