@@ -7,8 +7,9 @@ import { PDFUpload } from '../../components/PDFUpload'
 import { ConversionProgress } from '../../components/ConversionProgress'
 import { VideoPreview } from '../../components/VideoPreview'
 import { ProcessingAnimation } from '../../components/animations/ProcessingAnimation'
+import { ContentPreview } from '../../components/ContentPreview'
 import { PDFConversionController } from '../../controllers/PDFConversionController'
-import { PDFFile, ConversionOptions, ConversionStatus } from '../../models/Conversion'
+import { PDFFile, ConversionOptions, ConversionStatus, PDFExtractionResponse } from '../../models/Conversion'
 import { Settings, Play, CheckCircle } from 'lucide-react'
 import { MotionWrapper } from '../../components/ui/MotionWrapper'
 
@@ -30,6 +31,10 @@ const ConvertPDFToVideo: NextPage = () => {
     includeTransitions: true,
   })
   const [error, setError] = useState<string | null>(null)
+
+  // Content preview state
+  const [extractedContent, setExtractedContent] = useState<PDFExtractionResponse | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
 
   const handleFileSelect = (file: PDFFile) => {
     setSelectedFile(file)
@@ -59,15 +64,19 @@ const ConvertPDFToVideo: NextPage = () => {
       setProcessingStage('extracting')
       setProcessingProgress(50)
 
-      // Automatically start extraction
-      await PDFConversionController.extractContent(response.jobId)
+      // Extract content
+      const extraction = await PDFConversionController.extractContent(response.jobId)
 
       setProcessingProgress(100)
 
-      // Clear processing state after complete
+      // Store extraction and show preview
+      setExtractedContent(extraction)
+
+      // Clear processing state and show preview
       setTimeout(() => {
         setProcessingStage(null)
         setProcessingProgress(0)
+        setShowPreview(true)  // Show content preview
       }, 500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload PDF')
@@ -75,6 +84,23 @@ const ConvertPDFToVideo: NextPage = () => {
       setProcessingProgress(0)
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  const handleStartGeneration = async () => {
+    if (!jobId) return
+
+    try {
+      setShowPreview(false)
+      setIsConverting(true)
+      setError(null)
+
+      const result = await PDFConversionController.startConversion(jobId, options)
+      console.log('Video generation started:', result)
+    } catch (err) {
+      console.error('Generation error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to start video generation')
+      setIsConverting(false)
     }
   }
 
@@ -256,6 +282,25 @@ const ConvertPDFToVideo: NextPage = () => {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Content Preview - Show after extraction */}
+          {showPreview && extractedContent && (
+            <MotionWrapper
+              as="div"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              <ContentPreview
+                pages={extractedContent.pages}
+                totalPages={extractedContent.totalPages}
+                onGenerate={handleStartGeneration}
+                onCancel={() => {
+                  setShowPreview(false)
+                  setExtractedContent(null)
+                }}
+              />
+            </MotionWrapper>
           )}
 
           {/* Conversion Progress */}
