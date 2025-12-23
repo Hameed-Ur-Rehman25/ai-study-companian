@@ -109,11 +109,11 @@ async def convert_to_video(
     Use status endpoint to check progress
     """
     try:
-        from app.services.elevenlabs_tts_service import ElevenLabsTTSService
+        from app.services.gtts_service import GTTSService
         from app.services.video_service import VideoService
         from app.services.conversion_service import ConversionService
         
-        tts_service = ElevenLabsTTSService(storage_service)
+        tts_service = GTTSService(storage_service)
         video_service = VideoService(storage_service)
         conversion_service = ConversionService(
             storage_service, pdf_service, tts_service, video_service

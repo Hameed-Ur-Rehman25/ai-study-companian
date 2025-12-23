@@ -41,7 +41,7 @@ class ConversionStatus(str, Enum):
 class ConversionRequest(BaseModel):
     """Request model for PDF to video conversion"""
     job_id: str
-    voice_id: Optional[str] = "21m00Tcm4TlvDq8ikWAM"  # Default: Rachel
+    voice_id: Optional[str] = "en"  # Language code for gTTS: en, en-us, en-uk, etc.
     video_quality: Optional[str] = "high"  # low, medium, high
     include_animations: Optional[bool] = True
     include_transitions: Optional[bool] = True

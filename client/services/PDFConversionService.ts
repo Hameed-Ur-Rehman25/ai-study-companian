@@ -77,7 +77,7 @@ export class PDFConversionService {
       },
       body: JSON.stringify({
         job_id: jobId,
-        voice_id: options.voiceId || '21m00Tcm4TlvDq8ikWAM',
+        voice_id: options.voiceId || 'en',
         video_quality: options.videoQuality || 'high',
         include_animations: options.includeAnimations !== false,
         include_transitions: options.includeTransitions !== false,
