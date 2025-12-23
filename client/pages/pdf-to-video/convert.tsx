@@ -277,7 +277,7 @@ const ConvertPDFToVideo: NextPage = () => {
           )}
 
           {/* Content Preview - Show after extraction */}
-          {showPreview && extractedContent && (
+          {showPreview && extractedContent && jobId && (
             <MotionWrapper
               as="div"
               initial={{ opacity: 0, scale: 0.95 }}
