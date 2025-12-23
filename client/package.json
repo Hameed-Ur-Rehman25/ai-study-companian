@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.2.1",
+    "@remotion/cli": "^4.0.394",
+    "@remotion/lambda": "^4.0.394",
+    "@remotion/player": "^4.0.394",
     "@tailwindcss/typography": "^0.5.19",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
@@ -21,6 +24,7 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "remotion": "^4.0.394",
     "tailwind-merge": "^2.2.1",
     "vanilla-tilt": "^1.8.0"
   },
