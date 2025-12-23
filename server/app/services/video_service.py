@@ -8,9 +8,10 @@ from moviepy.editor import (
     ImageClip, AudioFileClip, CompositeVideoClip,
     concatenate_videoclips, TextClip
 )
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 import fitz  # PyMuPDF
 from app.services.storage_service import StorageService
+from app.services.unsplash_service import UnsplashService
 
 # Fix for Pillow 10+ compatibility (Image.ANTIALIAS was removed)
 # MoviePy still uses the old constant, so we monkey-patch it
@@ -25,6 +26,7 @@ class VideoService:
     
     def __init__(self, storage_service: StorageService):
         self.storage_service = storage_service
+        self.unsplash_service = UnsplashService()
     
     def pdf_page_to_image(self, pdf_path: str, page_num: int, output_path: str, dpi: int = 150) -> str:
         """
@@ -48,6 +50,72 @@ class VideoService:
         except Exception as e:
             logger.error(f"Error converting PDF page {page_num} to image: {e}")
             raise
+    
+    def create_composite_with_background(
+        self,
+        pdf_image_path: str,
+        background_image_path: str,
+        output_path: str,
+        opacity: float = 0.90
+    ) -> str:
+        """
+        Create composite image with Unsplash background and PDF overlay
+        """
+        try:
+            # Open images
+            background = Image.open(background_image_path).convert("RGB")
+            pdf_img = Image.open(pdf_image_path).convert("RGBA")
+            
+            # Resize background to 1920x1080 (16:9 HD)
+            target_size = (1920, 1080)
+            background = background.resize(target_size, Image.Resampling.LANCZOS)
+            
+            # Blur and darken background slightly
+            background = background.filter(ImageFilter.GaussianBlur(radius=2))
+            background = Image.blend(
+                background,
+                Image.new('RGB', background.size, (0, 0, 0)),
+                alpha=0.3
+            )
+            
+            # Calculate PDF content size (leave margins)
+            margin = 100
+            max_w = target_size[0] - 2 * margin
+            max_h = target_size[1] - 2 * margin
+            
+            # Resize PDF to fit
+            pdf_ratio = pdf_img.width / pdf_img.height
+            target_ratio = max_w / max_h
+            
+            if pdf_ratio > target_ratio:
+                new_w = max_w
+                new_h = int(new_w / pdf_ratio)
+            else:
+                new_h = max_h
+                new_w = int(new_h * pdf_ratio)
+            
+            pdf_img = pdf_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            
+            # Create white card for PDF
+            card = Image.new('RGBA', pdf_img.size, (255, 255, 255, int(255 * opacity)))
+            card.paste(pdf_img, (0, 0), pdf_img)
+            
+            # Convert and composite
+            background = background.convert('RGBA')
+            x = (target_size[0] - new_w) // 2
+            y = (target_size[1] - new_h) // 2
+            background.paste(card, (x, y), card)
+            
+            # Save
+            final = background.convert('RGB')
+            final.save(output_path, quality=95)
+            
+            logger.info(f"Created composite: {output_path}")
+            return output_path
+        
+        except Exception as e:
+            logger.error(f"Error creating composite: {e}")
+            return pdf_image_path
     
     def create_slide_video(
         self,
@@ -175,6 +243,28 @@ class VideoService:
                 # Convert PDF page to image
                 image_path = os.path.join(job_dir, f"page_{page_num}.png")
                 self.pdf_page_to_image(pdf_path, page_num, image_path)
+                
+                # Try to fetch Unsplash background image
+                unsplash_path = None
+                if page_data.get('title'):
+                    # Use page title as search query
+                    query = page_data['title']
+                    logger.info(f"Searching Unsplash for: {query}")
+                    
+                    unsplash_path = self.unsplash_service.fetch_image_for_topic(
+                        topic=query,
+                        save_dir=job_dir,
+                        filename=f"unsplash_{page_num}.jpg"
+                    )
+                
+                # If Unsplash image found, create composite
+                if unsplash_path:
+                    composite_path = os.path.join(job_dir, f"composite_{page_num}.jpg")
+                    image_path = self.create_composite_with_background(
+                        pdf_image_path=image_path,
+                        background_image_path=unsplash_path,
+                        output_path=composite_path
+                    )
                 
                 # Create slide video
                 slide_clip = self.create_slide_video(
