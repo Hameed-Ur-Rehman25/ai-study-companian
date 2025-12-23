@@ -1,5 +1,5 @@
-import React from 'react'
-import { ChevronRight, Image as ImageIcon, FileText, Sparkles } from 'lucide-react'
+import React, { useState } from 'react'
+import { ChevronRight, Image as ImageIcon, FileText, Sparkles, Loader2 } from 'lucide-react'
 import { MotionWrapper } from './ui/MotionWrapper'
 
 interface Page {
@@ -12,6 +12,7 @@ interface Page {
 interface ContentPreviewProps {
     pages: Page[]
     totalPages: number
+    jobId: string
     onGenerate: () => void
     onCancel: () => void
 }
@@ -19,9 +20,41 @@ interface ContentPreviewProps {
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
     pages,
     totalPages,
+    jobId,
     onGenerate,
     onCancel
 }) => {
+    const [isGenerating, setIsGenerating] = useState(false)
+    const [generationStatus, setGenerationStatus] = useState('')
+
+    const handleGenerate = async () => {
+        setIsGenerating(true)
+        setGenerationStatus('Generating AI teacher scripts...')
+
+        try {
+            // Call the generate-scripts endpoint
+            const response = await fetch(`http://localhost:8000/api/video/generate-scripts/${jobId}`, {
+                method: 'POST'
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to generate scripts')
+            }
+
+            setGenerationStatus('Scripts, images, and audio generated!')
+
+            // Wait a moment then call parent's onGenerate
+            setTimeout(() => {
+                onGenerate()
+            }, 1000)
+
+        } catch (error) {
+            console.error('Error generating scripts:', error)
+            setGenerationStatus('Error generating content')
+            setIsGenerating(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -42,6 +75,16 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
                     Review the extracted content before generating your video ({totalPages} pages)
                 </p>
             </MotionWrapper>
+
+            {/* Generation Status */}
+            {isGenerating && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                        <Loader2 className="animate-spin text-blue-600" size={20} />
+                        <span className="text-blue-900 font-medium">{generationStatus}</span>
+                    </div>
+                </div>
+            )}
 
             {/* Pages Preview */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -99,20 +142,31 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
             <div className="flex gap-4">
                 <button
                     onClick={onCancel}
-                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold"
+                    disabled={isGenerating}
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Go Back
                 </button>
 
                 <MotionWrapper
                     as="button"
-                    onClick={onGenerate}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-semibold flex items-center justify-center gap-2 shadow-lg"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-semibold flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileHover={{ scale: isGenerating ? 1 : 1.02 }}
+                    whileTap={{ scale: isGenerating ? 1 : 0.98 }}
                 >
-                    <Sparkles size={20} />
-                    Generate Video with AI
+                    {isGenerating ? (
+                        <>
+                            <Loader2 className="animate-spin" size={20} />
+                            Generating...
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles size={20} />
+                            Generate Video with AI
+                        </>
+                    )}
                 </MotionWrapper>
             </div>
         </div>
