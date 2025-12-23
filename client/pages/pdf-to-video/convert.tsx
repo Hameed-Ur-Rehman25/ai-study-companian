@@ -197,120 +197,122 @@ const ConvertPDFToVideo: NextPage = () => {
                           <option value="medium">Medium</option>
                           <option value="low">Low</option>
                         </select>
-
-                        <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={options.includeAnimations}
-                              onChange={(e) =>
-                                setOptions({ ...options, includeAnimations: e.target.checked })
-                              }
-                              className="rounded"
-                            />
-                            <span className="text-sm text-gray-700">Animations</span>
-                          </label>
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={options.includeTransitions}
-                              onChange={(e) =>
-                                setOptions({ ...options, includeTransitions: e.target.checked })
-                              }
-                              className="rounded"
-                            />
-                            <span className="text-sm text-gray-700">Transitions</span>
-                          </label>
-                        </div>
                       </div>
                     </div>
-                )}
-                  </MotionWrapper>
 
-              {/* Upload Button */}
-                {selectedFile && !isUploading && (
-                  <MotionWrapper
-                    as="button"
-                    onClick={handleUpload}
-                    disabled={isUploading}
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
-                    whileHover={{ scale: isUploading ? 1 : 1.02 }}
-                    whileTap={{ scale: isUploading ? 1 : 0.98 }}
-                  >
-                    <Play size={20} />
-                    Upload & Start Conversion
-                  </MotionWrapper>
-                )}
-
-                {/* Processing Animation */}
-                {isUploading && processingStage && (
-                  <ProcessingAnimation
-                    stage={processingStage}
-                    progress={processingProgress}
-                    fileName={selectedFile?.file?.name}
-                  />
-                )}
-
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
-                    {error}
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={options.includeAnimations}
+                          onChange={(e) =>
+                            setOptions({ ...options, includeAnimations: e.target.checked })
+                          }
+                          className="rounded"
+                        />
+                        <span className="text-sm text-gray-700">Animations</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={options.includeTransitions}
+                          onChange={(e) =>
+                            setOptions({ ...options, includeTransitions: e.target.checked })
+                          }
+                          className="rounded"
+                        />
+                        <span className="text-sm text-gray-700">Transitions</span>
+                      </label>
+                    </div>
                   </div>
-                )}
-            </div>
+                    </div>
           )}
+        </MotionWrapper>
 
-          {/* Conversion Progress */}
-          {jobId && isConverting && (
-            <ConversionProgress
-              jobId={jobId}
-              onComplete={handleConversionComplete}
-              onError={handleConversionError}
-            />
-          )}
+        {/* Upload Button */}
+        {selectedFile && !isUploading && (
+          <MotionWrapper
+            as="button"
+            onClick={handleUpload}
+            disabled={isUploading}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+            whileHover={{ scale: isUploading ? 1 : 1.02 }}
+            whileTap={{ scale: isUploading ? 1 : 0.98 }}
+          >
+            <Play size={20} />
+            Upload & Start Conversion
+          </MotionWrapper>
+        )}
 
-          {/* Start Conversion Button (after upload) */}
-          {jobId && !isConverting && !conversionStatus && (
-            <div className="space-y-4">
-              {/* Success message showing file is ready */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-green-700">
-                  <CheckCircle size={20} />
-                  <div>
-                    <p className="font-semibold">PDF Uploaded Successfully!</p>
-                    <p className="text-sm text-green-600">
-                      File ready for conversion. Click below to start.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        {/* Processing Animation */}
+        {isUploading && processingStage && (
+          <ProcessingAnimation
+            stage={processingStage}
+            progress={processingProgress}
+            fileName={selectedFile?.file?.name}
+          />
+        )}
 
-              <MotionWrapper
-                as="button"
-                type="button"
-                onClick={(e: React.MouseEvent) => {
-                  e.preventDefault()
-                  handleConvert()
-                }}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Play size={20} />
-                Start Video Conversion
-              </MotionWrapper>
-            </div>
-          )}
-
-          {/* Video Preview */}
-          {conversionStatus?.status === 'completed' && jobId && (
-            <div className="mt-8">
-              <VideoPreview jobId={jobId} />
-            </div>
-          )}
-        </div>
-
-        <Footer />
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+            {error}
+          </div>
+        )}
       </div>
+          )}
+
+      {/* Conversion Progress */}
+      {jobId && isConverting && (
+        <ConversionProgress
+          jobId={jobId}
+          onComplete={handleConversionComplete}
+          onError={handleConversionError}
+        />
+      )}
+
+      {/* Start Conversion Button (after upload) */}
+      {jobId && !isConverting && !conversionStatus && (
+        <div className="space-y-4">
+          {/* Success message showing file is ready */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-green-700">
+              <CheckCircle size={20} />
+              <div>
+                <p className="font-semibold">PDF Uploaded Successfully!</p>
+                <p className="text-sm text-green-600">
+                  File ready for conversion. Click below to start.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <MotionWrapper
+            as="button"
+            type="button"
+            onClick={(e: React.MouseEvent) => {
+              e.preventDefault()
+              handleConvert()
+            }}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Play size={20} />
+            Start Video Conversion
+          </MotionWrapper>
+        </div>
+      )}
+
+      {/* Video Preview */}
+      {conversionStatus?.status === 'completed' && jobId && (
+        <div className="mt-8">
+          <VideoPreview jobId={jobId} />
+        </div>
+      )}
+    </div >
+
+      <Footer />
+      </div >
     </>
   )
 }
