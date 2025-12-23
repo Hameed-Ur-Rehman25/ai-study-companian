@@ -9,9 +9,13 @@ from fastapi.responses import JSONResponse
 from app.models.pdf_models import PDFUploadRequest, PDFExtractionResponse, ConversionRequest
 from app.services.pdf_service import PDFService
 from app.services.storage_service import StorageService
+from app.services.database_service import Database
 from app.api.dependencies import get_pdf_service, get_storage_service
 
 logger = logging.getLogger(__name__)
+
+# Initialize database
+db = Database()
 
 router = APIRouter(prefix="/api/pdf", tags=["PDF"])
 
@@ -52,10 +56,25 @@ async def upload_pdf(
         if not is_valid:
             raise HTTPException(status_code=400, detail=error_msg)
         
+        # Get page count for database
+        import fitz
+        doc = fitz.open(pdf_path)
+        total_pages = len(doc)
+        doc.close()
+        
+        # Create database record
+        video_id = db.create_video(
+            job_id=job_id,
+            pdf_filename=file.filename,
+            total_pages=total_pages
+        )
+        logger.info(f"Created video record {video_id} for job {job_id}")
+        
         return JSONResponse({
             "job_id": job_id,
             "filename": file.filename,
             "file_size": len(content),
+            "total_pages": total_pages,
             "status": "uploaded"
         })
     
@@ -73,7 +92,7 @@ async def extract_pdf_content(
     pdf_service: PDFService = Depends(get_pdf_service)
 ):
     """
-    Extract content from uploaded PDF
+    Extract content from uploaded PDF and save to database
     """
     try:
         # Find PDF file in upload directory
@@ -85,8 +104,35 @@ async def extract_pdf_content(
         
         pdf_path = str(pdf_files[0])
         
+        # Get video record from database
+        video = db.get_video_by_job_id(job_id)
+        if not video:
+            raise HTTPException(status_code=404, detail="Video record not found")
+        
+        # Update status
+        db.update_video_status(job_id, "extracting")
+        
         # Extract content
         extraction_result = pdf_service.extract_content(pdf_path, job_id)
+        
+        # Save pages to database
+        for page_data in extraction_result['pages']:
+            page_id = db.create_page(
+                video_id=video['id'],
+                page_num=page_data['page_num'],
+                text=page_data['text'],
+                title=page_data.get('title'),
+                pdf_image_path=None  # Will be added when we render pages
+            )
+            
+            # Save extracted images
+            for idx, img_path in enumerate(page_data.get('images', [])):
+                db.add_page_image(page_id, img_path, idx)
+        
+        # Update status
+        db.update_video_status(job_id, "extracted")
+        
+        logger.info(f"Saved {len(extraction_result['pages'])} pages to database for job {job_id}")
         
         return extraction_result
     

@@ -6,7 +6,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from app.api.routes import pdf_routes, video_routes, ai_routes
+from app.api.routes import pdf_routes, video_routes, ai_routes, video_data_routes
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +40,7 @@ app.add_middleware(
 app.include_router(pdf_routes.router)
 app.include_router(video_routes.router)
 app.include_router(ai_routes.router)
+app.include_router(video_data_routes.router)
 
 
 @app.get("/")
