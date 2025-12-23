@@ -4,7 +4,6 @@ import { Header } from '../components/Header'
 import { HeroSection } from '../components/HeroSection'
 import { PopularTools } from '../components/PopularTools'
 import { SimpleTasks } from '../components/SimpleTasks'
-import { AdditionalFeatures } from '../components/AdditionalFeatures'
 import { Footer } from '../components/Footer'
 import { HomeController } from '../controllers/HomeController'
 
@@ -62,7 +61,6 @@ const Home: NextPage = () => {
                         <HeroSection />
                         <PopularTools tools={tools} />
                         <SimpleTasks />
-                        <AdditionalFeatures />
                     </main>
                 </div>
                 <Footer />

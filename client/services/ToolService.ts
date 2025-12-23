@@ -31,36 +31,6 @@ export class ToolService {
         color: 'bg-emerald-500',
         description: 'Get AI-powered summaries of your PDF documents in seconds',
         href: '/summarize-pdf'
-      },
-      {
-        name: 'Word to PDF',
-        icon: FileText,
-        color: 'bg-blue-500',
-        description: 'Convert Word documents to PDF format quickly and easily'
-      },
-      {
-        name: 'PPT to PDF',
-        icon: Presentation,
-        color: 'bg-orange-500',
-        description: 'Transform PowerPoint presentations into PDF files'
-      },
-      {
-        name: 'Edit PDF',
-        icon: Edit,
-        color: 'bg-yellow-500',
-        description: 'Edit text, images, and content in your PDF documents'
-      },
-      {
-        name: 'Merge PDF',
-        icon: Merge,
-        color: 'bg-indigo-500',
-        description: 'Combine multiple PDF files into a single document'
-      },
-      {
-        name: 'Compress PDF',
-        icon: Archive,
-        color: 'bg-red-500',
-        description: 'Reduce PDF file size without losing quality'
       }
     ]
   }
