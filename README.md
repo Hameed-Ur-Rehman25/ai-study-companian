@@ -23,11 +23,11 @@ graph TD
     Client -->|HTTP/REST| API[FastAPI Server]
     
     subgraph "Server Services"
-        API --> PDF[PDF Engine\n(PyMuPDF/pdfplumber)]
+        API --> PDF["PDF Engine<br>PyMuPDF/pdfplumber"]
         API --> LLM[Groq AI Service]
         API --> TTS[Edge TTS Service]
-        API --> Video[Video Engine\n(MoviePy)]
-        API --> Storage[Storage Service\n(Local/Temp)]
+        API --> Video["Video Engine<br>MoviePy"]
+        API --> Storage["Storage Service<br>Local/Temp"]
     end
 
     PDF -->|Text/Images| LLM
