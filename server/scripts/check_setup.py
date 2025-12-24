@@ -33,7 +33,6 @@ def check_dependencies():
         'uvicorn',
         'pdfplumber',
         'fitz',  # PyMuPDF
-        'google.cloud.texttospeech',
         'moviepy',
         'PIL',  # Pillow
     ]
@@ -45,8 +44,6 @@ def check_dependencies():
                 __import__('fitz')
             elif package == 'PIL':
                 __import__('PIL')
-            elif package == 'google.cloud.texttospeech':
-                __import__('google.cloud.texttospeech')
             else:
                 __import__(package)
             print(f"✅ {package}")
@@ -91,15 +88,14 @@ def check_env_file():
     with open(env_file) as f:
         content = f.read()
         required_vars = [
-            'GOOGLE_CLOUD_PROJECT_ID',
-            'GOOGLE_APPLICATION_CREDENTIALS'
+            'GROQ_API_KEY'
         ]
         
         missing_vars = []
         for var in required_vars:
             if f'{var}=' in content:
                 value = [line for line in content.split('\n') if line.startswith(f'{var}=')][0]
-                if 'your-project-id' in value or 'path/to' in value:
+                if 'your_groq_api_key' in value:
                     print(f"⚠️  {var} needs to be configured")
                     missing_vars.append(var)
                 else:
@@ -113,31 +109,7 @@ def check_env_file():
     
     return True
 
-def check_google_credentials():
-    """Check if Google credentials file exists"""
-    env_file = Path('.env')
-    if not env_file.exists():
-        return False
-    
-    # Read GOOGLE_APPLICATION_CREDENTIALS from .env
-    with open(env_file) as f:
-        for line in f:
-            if line.startswith('GOOGLE_APPLICATION_CREDENTIALS='):
-                creds_path = line.split('=', 1)[1].strip().strip('"').strip("'")
-                if creds_path.startswith('./'):
-                    creds_path = Path(creds_path)
-                else:
-                    creds_path = Path(creds_path)
-                
-                if creds_path.exists():
-                    print(f"✅ Google credentials file found: {creds_path}")
-                    return True
-                else:
-                    print(f"❌ Google credentials file not found: {creds_path}")
-                    print("   Download from Google Cloud Console and place in server directory")
-                    return False
-    
-    return False
+
 
 def check_directories():
     """Check if required directories exist"""
@@ -169,7 +141,6 @@ def main():
         ("Dependencies", check_dependencies),
         ("FFmpeg", check_ffmpeg),
         ("Environment File", check_env_file),
-        ("Google Credentials", check_google_credentials),
         ("Storage Directories", check_directories),
     ]
     
