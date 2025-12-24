@@ -113,26 +113,54 @@ async def extract_pdf_content(
         db.update_video_status(job_id, "extracting")
         
         # Extract content
+        logger.info("Running robust extraction logic v2")
         extraction_result = pdf_service.extract_content(pdf_path, job_id)
         
         # Save pages to database
-        for page_data in extraction_result['pages']:
-            page_id = db.create_page(
-                video_id=video['id'],
-                page_num=page_data['page_num'],
-                text=page_data['text'],
-                title=page_data.get('title'),
-                pdf_image_path=None  # Will be added when we render pages
-            )
+        try:
+            # Handle both Pydantic model and dict
+            if isinstance(extraction_result, dict):
+                pages = extraction_result.get('pages', [])
+            else:
+                pages = getattr(extraction_result, 'pages', [])
             
-            # Save extracted images
-            for idx, img_path in enumerate(page_data.get('images', [])):
-                db.add_page_image(page_id, img_path, idx)
+            for page_data in pages:
+                # Handle both Pydantic model and dict for page_data
+                if isinstance(page_data, dict):
+                    p_num = page_data.get('page_num')
+                    p_text = page_data.get('text')
+                    p_title = page_data.get('title')
+                    p_images = page_data.get('images', [])
+                else:
+                    p_num = getattr(page_data, 'page_num', None)
+                    p_text = getattr(page_data, 'text', None)
+                    p_title = getattr(page_data, 'title', None)
+                    p_images = getattr(page_data, 'images', [])
+
+                page_id = db.create_page(
+                    video_id=video['id'],
+                    page_num=p_num,
+                    text=p_text,
+                    title=p_title,
+                    pdf_image_path=None
+                )
+                
+                # Save extracted images
+                for idx, img_path in enumerate(p_images):
+                    db.add_page_image(page_id, img_path, idx)
+                    
+        except Exception as e:
+            logger.error(f"Database saving failed: {e}")
+            # Don't raise here, we want to return the extraction result even if DB save fails
+            # But wait, if DB save fails, video generation won't work.
+            # So we SHOULD raise or log critical error.
+            # Re-raising for now to be safe.
+            raise e
         
         # Update status
         db.update_video_status(job_id, "extracted")
         
-        logger.info(f"Saved {len(extraction_result['pages'])} pages to database for job {job_id}")
+        logger.info(f"Saved {len(pages)} pages to database for job {job_id}")
         
         return extraction_result
     

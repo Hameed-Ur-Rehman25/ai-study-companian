@@ -43,7 +43,7 @@ async def get_conversion_status(
             else:
                 raise HTTPException(status_code=404, detail="Job not found")
         
-        status_data = job_statuses[job_id]
+        status_data = job_statuses[job_id].copy()
         # Convert ISO strings to datetime objects
         status_data['created_at'] = datetime.fromisoformat(status_data['created_at'])
         status_data['updated_at'] = datetime.fromisoformat(status_data['updated_at'])

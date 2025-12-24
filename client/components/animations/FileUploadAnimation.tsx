@@ -14,7 +14,8 @@ export const FileUploadAnimation: React.FC<FileUploadAnimationProps> = ({
 
     useEffect(() => {
         // Fetch the animation from LottieFiles
-        fetch('https://lottie.host/f02df619-aad2-4a89-9fc7-2fa0d4fe8486/fmRGi65g4H.json')
+        // Fetch the animation from LottieFiles - using a stable public URL
+        fetch('https://assets9.lottiefiles.com/packages/lf20_msdmfngy.json')
             .then(response => response.json())
             .then(data => setAnimationData(data))
             .catch(err => console.error('Failed to load animation:', err))
