@@ -100,19 +100,41 @@ export const Slide: React.FC<SlideProps> = ({ page }) => {
                             maxHeight: '600px',
                             overflow: 'hidden'
                         }}>
-                            {page.images.slice(0, 2).map((imgUrl, i) => (
-                                <Img
-                                    key={i}
-                                    src={imgUrl}
-                                    style={{
-                                        maxWidth: '100%',
-                                        maxHeight: page.images!.length > 1 ? '280px' : '560px',
-                                        objectFit: 'contain',
-                                        borderRadius: 8,
-                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                                    }}
-                                />
-                            ))}
+                        }}>
+                            {page.images.slice(0, 3).map((imgUrl, i) => {
+                                // Stagger animations: First image at 1s, others follow every 1.5s
+                                const delay = 30 + (i * 45); // 30 frames (1s) start delay, 45 frames (1.5s) between
+
+                                const imageProgress = spring({
+                                    frame: frame - delay,
+                                    fps,
+                                    config: { damping: 12, stiffness: 100 }
+                                });
+
+                                const imageScale = interpolate(imageProgress, [0, 1], [0.8, 1]);
+                                const imageOpacity = interpolate(imageProgress, [0, 1], [0, 1]);
+
+                                if (frame < delay) return null; // Don't render before start time
+
+                                return (
+                                    <div key={i} style={{
+                                        transform: `scale(${imageScale})`,
+                                        opacity: imageOpacity,
+                                    }}>
+                                        <Img
+                                            src={imgUrl}
+                                            style={{
+                                                maxWidth: '100%',
+                                                maxHeight: page.images!.length > 1 ? '240px' : '480px',
+                                                objectFit: 'contain',
+                                                borderRadius: 8,
+                                                boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                                                border: '2px solid white'
+                                            }}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
                         page.pdf_image_path && (
