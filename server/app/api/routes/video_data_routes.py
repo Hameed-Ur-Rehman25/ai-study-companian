@@ -52,33 +52,83 @@ async def generate_scripts_and_assets(job_id: str):
                 page_num=page['page_num']
             )
             
+            # Force Sync: Ensure script starts with title for audio/caption consistency
+            page_title = page.get('title', '').strip()
+            if page_title and not teacher_script.strip().lower().startswith(page_title.lower()):
+                 teacher_script = f"{page_title}. {teacher_script}"
+            
             # Update database
             db.update_page_script(page['id'], teacher_script)
             logger.info(f"Generated script for page {page['page_num']}")
         
-        # 3. Fetch Unsplash images
+        # 3. Fetch images (Hybrid Strategy: Unsplash -> Extracted PDF Images)
         db.update_video_status(job_id, "fetching_images")
-        logger.info("Fetching Unsplash images")
+        logger.info("Fetching images with hybrid strategy")
         
         unsplash_dir = storage_service.get_job_dir(job_id, "unsplash")
         unsplash_dir.mkdir(parents=True, exist_ok=True)
         
         for page in pages:
+            image_found = False
+            
+            # Strategy A: Try Unsplash
             if page.get('title'):
-                # Fetch image
-                image_path = unsplash_service.fetch_image_for_topic(
-                    topic=page['title'],
-                    save_dir=unsplash_dir,
-                    filename=f"page_{page['page_num']}.jpg"
-                )
+                try:
+                    image_path = unsplash_service.fetch_image_for_topic(
+                        topic=page['title'],
+                        save_dir=unsplash_dir,
+                        filename=f"page_{page['page_num']}.jpg"
+                    )
+                    
+                    if image_path:
+                        db.update_page_unsplash(
+                            page['id'],
+                            image_url="",
+                            image_path=image_path
+                        )
+                        logger.info(f"Using Unsplash image for page {page['page_num']}")
+                        image_found = True
+                except Exception as e:
+                    logger.warning(f"Unsplash fetch failed for page {page['page_num']}: {e}")
+            
+            # Strategy B: Fallback to Extracted PDF Images
+            if not image_found:
+                logger.info(f"Checking extracted PDF images for fallback on page {page['page_num']}")
+                # Get images extracted from this specific page
+                # We need to query the database for page_images
+                # This requires a slightly more complex query than available in local 'page' dict
+                # So we query db directly
                 
-                if image_path:
+                # Note: We don't have a direct 'get_images_for_page' method exposed in DB service easily broadly
+                # But we can assume if PDF extraction worked, valid images are in page_images table
+                # Let's add a quick helper or modify the flow.
+                
+                # Actually, simpler: We can just use the 'pages' object if we re-fetch it fully?
+                # The 'pages' variable above is from 'get_pages_by_job_id', which does NOT join page_images.
+                # Let's do a direct DB check for images for this page_id
+                pass 
+                # See below for implementation in next block integration
+                
+                # Implementation:
+                conn = db.get_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT image_path FROM page_images WHERE page_id = ? ORDER BY position LIMIT 1", (page['id'],))
+                row = cursor.fetchone()
+                conn.close()
+                
+                if row and row[0]:
+                    # Found an extracted image!
+                    extracted_image_path = row[0]
+                    # We treat this as the "unsplash" background for consistency in the video generator
                     db.update_page_unsplash(
                         page['id'],
-                        image_url="",  # Could save the original URL too
-                        image_path=image_path
+                        image_url="extracted_from_pdf",
+                        image_path=extracted_image_path
                     )
-                    logger.info(f"Fetched Unsplash image for page {page['page_num']}")
+                    logger.info(f"Fallback: Using extracted PDF image for page {page['page_num']}")
+                    image_found = True
+                else:
+                    logger.info(f"No background image found for page {page['page_num']} (Unsplash failed + no PDF images)")
         
         # 4. Generate audio from teacher scripts
         db.update_video_status(job_id, "generating_audio")

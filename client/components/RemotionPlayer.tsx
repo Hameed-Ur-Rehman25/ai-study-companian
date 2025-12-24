@@ -58,37 +58,68 @@ export const RemotionPlayer: React.FC<RemotionPlayerProps> = ({ jobId }) => {
     const totalDuration = calculateTotalDuration(videoData, fps);
 
     return (
-        <div className="space-y-4">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-                <Player
-                    component={PDFVideo}
-                    inputProps={{ pages: videoData }}
-                    durationInFrames={totalDuration}
-                    fps={fps}
-                    compositionWidth={1920}
-                    compositionHeight={1080}
-                    style={{
-                        width: '100%',
-                        aspectRatio: '16/9',
-                    }}
-                    controls
-                    loop
-                />
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                        <h3 className="font-semibold text-blue-900 mb-1">Video Preview Ready!</h3>
-                        <p className="text-sm text-blue-700">
-                            Your video has been generated with AI narration and background images.
-                            Use the player controls to preview before downloading.
-                        </p>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column: Video Player */}
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                        <Player
+                            component={PDFVideo}
+                            inputProps={{ pages: videoData }}
+                            durationInFrames={totalDuration}
+                            fps={fps}
+                            compositionWidth={1920}
+                            compositionHeight={1080}
+                            style={{
+                                width: '100%',
+                                aspectRatio: '16/9',
+                            }}
+                            controls
+                            loop
+                        />
                     </div>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap">
-                        <Download size={16} />
-                        Download
-                    </button>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-blue-900 mb-1">Video Preview Ready!</h3>
+                                <p className="text-sm text-blue-700">
+                                    Your video has been generated with AI narration and background images.
+                                    Use the player controls to preview before downloading.
+                                </p>
+                            </div>
+                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap">
+                                <Download size={16} />
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Script View */}
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col h-[600px]">
+                    <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+                        <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                            <span>📝</span> Narration Script
+                        </h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {videoData.map((page, index) => (
+                            <div key={index} className="bg-white p-4 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors shadow-sm">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                        Slide {page.page_num}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        {Math.round(page.duration || 0)}s
+                                    </span>
+                                </div>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    {page.teacher_script || "No script generated for this slide."}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

@@ -24,8 +24,8 @@ wheels/
 *.egg
 
 # Environment
-# .env
-# .venv
+.env
+.venv
 
 # Google Cloud Credentials (IMPORTANT: Never commit these!)
 google-credentials.json
