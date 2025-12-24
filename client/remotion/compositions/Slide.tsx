@@ -39,7 +39,7 @@ export const Slide: React.FC<SlideProps> = ({ page }) => {
             {/* Unsplash Background Image */}
             {page.unsplash_image_path && (
                 <Img
-                    src={`file://${page.unsplash_image_path}`}
+                    src={page.unsplash_image_path}
                     style={{
                         width: '100%',
                         height: '100%',
@@ -92,7 +92,7 @@ export const Slide: React.FC<SlideProps> = ({ page }) => {
                     {/* PDF Page Image */}
                     {page.pdf_image_path && (
                         <Img
-                            src={`file://${page.pdf_image_path}`}
+                            src={page.pdf_image_path}
                             style={{
                                 maxWidth: '100%',
                                 maxHeight: '600px',
@@ -124,7 +124,7 @@ export const Slide: React.FC<SlideProps> = ({ page }) => {
 
             {/* Audio Narration */}
             {page.audio_path && (
-                <Audio src={`file://${page.audio_path}`} />
+                <Audio src={page.audio_path} />
             )}
         </AbsoluteFill>
     );

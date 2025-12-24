@@ -4,7 +4,6 @@ gTTS (Google Text-to-Speech) service - FREE, no API key required
 import logging
 from typing import Tuple, List, Dict
 from gtts import gTTS
-from pydub import AudioSegment
 from app.services.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
@@ -50,9 +49,10 @@ class GTTSService:
             audio_path = temp_dir / f"page_{page_num}_audio.mp3"
             tts.save(str(audio_path))
             
-            # Get duration using pydub
-            audio_segment = AudioSegment.from_mp3(str(audio_path))
-            duration = len(audio_segment) / 1000.0  # Convert ms to seconds
+            # Get duration using mutagen
+            from mutagen.mp3 import MP3
+            audio = MP3(str(audio_path))
+            duration = audio.info.length
             
             logger.info(f"Generated audio for page {page_num}: {duration:.2f}s")
             

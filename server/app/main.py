@@ -6,10 +6,13 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+
+# Load environment variables immediately
+load_dotenv()
+
 from app.api.routes import pdf_routes, video_routes, ai_routes, video_data_routes
 
-# Load environment variables
-load_dotenv()
+# Configure logging
 
 # Configure logging
 logging.basicConfig(
@@ -41,6 +44,12 @@ app.include_router(pdf_routes.router)
 app.include_router(video_routes.router)
 app.include_router(ai_routes.router)
 app.include_router(video_data_routes.router)
+
+# Mount static files
+from fastapi.staticfiles import StaticFiles
+# Ensure storage directory exists
+os.makedirs("storage", exist_ok=True)
+app.mount("/static", StaticFiles(directory="storage"), name="static")
 
 
 @app.get("/")
