@@ -55,7 +55,7 @@ class UnsplashService:
             )
             
             if response.status_code != 200:
-                logger.error(f"Unsplash API error: {response.status_code}")
+                logger.error(f"Unsplash API error: {response.status_code} - {response.text}")
                 return None
             
             data = response.json()

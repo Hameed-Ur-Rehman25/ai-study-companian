@@ -10,6 +10,7 @@ export interface PageData {
     unsplash_image_path?: string;
     audio_path?: string;
     duration: number;
+    images?: string[];
 }
 
 export interface PDFVideoProps {
