@@ -34,7 +34,7 @@ pip install -r requirements.txt
 if [ ! -f .env ]; then
     echo "📝 Creating .env file from .env.example..."
     cp .env.example .env
-    echo "⚠️  Please edit .env file and add your Google Cloud credentials"
+    echo "⚠️  Please edit .env file and add your Groq API Key"
 else
     echo "✅ .env file already exists"
 fi
@@ -50,8 +50,7 @@ echo "✅ Setup complete!"
 echo ""
 echo "📋 Next steps:"
 echo "1. Activate virtual environment: source venv/bin/activate"
-echo "2. Set up Google Cloud credentials (see SETUP.md)"
-echo "3. Edit .env file with your configuration"
+echo "2. Edit .env file with your Groq API configuration"
 echo "4. Run the server: python -m app.main"
 echo ""
 

@@ -6,7 +6,7 @@ FastAPI backend for converting PDF documents to video lectures with AI narration
 
 - PDF upload and validation
 - Text and image extraction from PDFs
-- Google Cloud Text-to-Speech integration
+- Edge TTS integration
 - Video generation with animations and transitions
 - Progress tracking for conversion jobs
 - Video download and preview
@@ -19,7 +19,7 @@ For fastest setup, use the automated script:
 ./setup.sh
 ```
 
-Then follow the [Quick Start Guide](./QUICK_START.md) for Google Cloud setup.
+
 
 ## Setup
 
@@ -46,15 +46,9 @@ cp .env.example .env
 ```
 
 Required variables:
-- `GOOGLE_CLOUD_PROJECT_ID`: Your Google Cloud project ID
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to your service account key JSON file
 
-### 4. Google Cloud Setup
 
-1. Create a Google Cloud project
-2. Enable the Text-to-Speech API
-3. Create a service account and download the key JSON file
-4. Set the path in `GOOGLE_APPLICATION_CREDENTIALS`
+
 
 ### 5. Verify Setup
 
@@ -70,7 +64,7 @@ This will check:
 - Installed dependencies
 - FFmpeg installation
 - Environment configuration
-- Google credentials
+
 - Storage directories
 
 ### 6. Run the Server
@@ -144,5 +138,5 @@ isort app/
 - Video generation requires `ffmpeg` to be installed on the system
 - Large PDFs may take significant time to process
 - Generated files are stored temporarily and cleaned up after download
-- Google Cloud credentials are required for Text-to-Speech functionality
+
 
