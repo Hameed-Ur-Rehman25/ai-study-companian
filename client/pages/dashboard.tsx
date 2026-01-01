@@ -209,6 +209,36 @@ const Dashboard: NextPage = () => {
                                             Pro Active
                                         </button>
                                     )}
+
+                                    <hr className="border-gray-100" />
+
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                                                try {
+                                                    const res = await fetch(`${API_BASE_URL}/api/user`, {
+                                                        method: 'DELETE',
+                                                        headers: {
+                                                            'Authorization': `Bearer ${session?.access_token}`
+                                                        }
+                                                    });
+                                                    if (res.ok) {
+                                                        await useAuth().signOut();
+                                                        router.push('/login');
+                                                    } else {
+                                                        const data = await res.json();
+                                                        alert(data.detail || 'Failed to delete account');
+                                                    }
+                                                } catch (e) {
+                                                    console.error(e);
+                                                    alert('An error occurred');
+                                                }
+                                            }
+                                        }}
+                                        className="block w-full text-center py-2 px-4 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium text-sm"
+                                    >
+                                        Delete Account
+                                    </button>
                                 </div>
                             </div>
                         </div>

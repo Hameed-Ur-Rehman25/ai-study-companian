@@ -20,6 +20,7 @@ const faqs = [
         question: "What file formats do you support?",
         answer: "Currently, we support PDF documents. We are working on adding support for other formats like Word and PowerPoint in the future."
     }
+    //
 ]
 
 export const FAQ = () => {

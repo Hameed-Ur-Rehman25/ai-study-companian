@@ -21,7 +21,7 @@ def get_user_service(
         # We decode the user_id from the token or let Supabase client handle validation
         # Here we just pass the token to the service which uses it to init Supabase client
         # The Supabase client will fail if token is invalid when making requests
-        return UserService(access_token=token, user_id="derived_from_token") 
+        return UserService(access_token=token) 
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
@@ -41,5 +41,17 @@ async def get_user_stats(
         
         # Let's improve get_user_service to verify user.
         return user_service.get_user_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("")
+async def delete_account(
+    user_service: UserService = Depends(get_user_service)
+):
+    try:
+        user_service.delete_user_account()
+        return {"message": "Account deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

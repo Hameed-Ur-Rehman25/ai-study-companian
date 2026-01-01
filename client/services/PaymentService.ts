@@ -4,7 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export class PaymentService {
-    static async createCheckoutSession(priceId?: string) {
+    static async createCheckoutSession(priceId?: string, successUrl?: string, cancelUrl?: string) {
         try {
             const response = await fetch(`${API_BASE_URL}/api/payment/checkout`, {
                 method: 'POST',
@@ -14,9 +14,9 @@ export class PaymentService {
                 },
                 body: JSON.stringify({
                     price_id: priceId,
-                    // These URLs should point to your actual frontend routes
-                    success_url: `${window.location.origin}/pricing?success=true`,
-                    cancel_url: `${window.location.origin}/pricing?canceled=true`,
+                    // Use provided URLs or fallback to defaults
+                    success_url: successUrl || `${window.location.origin}/pricing?success=true`,
+                    cancel_url: cancelUrl || `${window.location.origin}/pricing?canceled=true`,
                 }),
             });
 

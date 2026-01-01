@@ -81,7 +81,10 @@ export const Pricing = () => {
 
             try {
                 setLoadingTier(tier.name)
-                await PaymentService.createCheckoutSession(tier.priceId)
+                // In a real app, you would likely call your backend first to create the session
+                // to keep your secret key secure and handle logic there.
+                // Assuming PaymentService calls your backend:
+                await PaymentService.createCheckoutSession(tier.priceId, `${window.location.origin}/dashboard?payment_success=true`, `${window.location.origin}/dashboard?payment_cancelled=true`)
             } catch (err) {
                 console.error(err)
                 alert('Failed to start checkout. Please try again.')
