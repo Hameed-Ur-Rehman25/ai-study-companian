@@ -16,8 +16,8 @@ export function Footer() {
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder="Enter your email address"
                   aria-label="Email address for newsletter"
                   className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm sm:text-base"
@@ -36,7 +36,7 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-2 md:col-span-4 lg:col-span-1">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg"></div>
-              <span className="text-white font-semibold text-base sm:text-lg">PDF AI Studio</span>
+              <span className="text-white font-semibold text-base sm:text-lg">AI Study Companion</span>
             </div>
             <p className="text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed">
               Transform your PDFs with cutting-edge AI technology. Create video lectures, chat with documents, and more.
@@ -117,7 +117,7 @@ export function Footer() {
         <div className="py-4 sm:py-6 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
             <div className="text-gray-400 text-xs sm:text-sm text-center md:text-left">
-              © 2024 PDF AI Studio. All rights reserved.
+              © {new Date().getFullYear()} AI Study Companion. All rights reserved.
             </div>
             <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
@@ -128,7 +128,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+    </footer >
   );
 }
 

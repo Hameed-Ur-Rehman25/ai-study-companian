@@ -41,12 +41,8 @@ const ChatWithPDF: NextPage = () => {
             const allSessions = await ChatController.getAllSessions()
             setSessions(allSessions)
 
-            // If sessions exist, auto-load the most recent one
-            if (allSessions.length > 0 && !jobId) {
-                const mostRecent = allSessions[0]
-                setJobId(mostRecent.job_id)
-                await loadSession(mostRecent.session_id)
-            }
+            setSessions(allSessions)
+            // Auto-load removed per user request for better UX
         } catch (err) {
             console.error('Failed to load global sessions:', err)
         } finally {
@@ -120,6 +116,8 @@ const ChatWithPDF: NextPage = () => {
         try {
             const sessionData = await ChatController.getSession(sessionId)
             setCurrentSessionId(sessionId)
+            // Critical: Update the job ID to match the selected session so the AI knows which PDF to talk about
+            setJobId(sessionData.session.job_id)
             setMessages(sessionData.messages)
             setIsSidebarOpen(false) // Close sidebar on mobile after selection
         } catch (err) {
@@ -248,7 +246,7 @@ const ChatWithPDF: NextPage = () => {
         setSelectedFile(null)
         setMessages([])
         setCurrentSessionId(null)
-        setSessions([])
+        // Keep sessions for sidebar
         setInputValue('')
         setIsSidebarOpen(false)
         setError(null)
@@ -317,11 +315,11 @@ const ChatWithPDF: NextPage = () => {
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                             <p className="text-gray-500">Loading your chats...</p>
                         </div>
-                    ) : !jobId && sessions.length === 0 ? (
-                        // Upload View - Only show if no active job AND no history
+                    ) : sessions.length === 0 && !jobId && !currentSessionId ? (
+                        // Landing Upload View - Only show if absolutely no history and no active chat
                         <div className="max-w-2xl mx-auto">
+                            {/* ... Content identical to previous Upload View ... */}
                             {processingStage ? (
-                                // Show processing animation
                                 <MotionWrapper
                                     as="div"
                                     initial={{ opacity: 0, scale: 0.95 }}
@@ -338,20 +336,20 @@ const ChatWithPDF: NextPage = () => {
                                 <>
                                     <MotionWrapper
                                         as="div"
-                                        className="text-center mb-8"
+                                        className="text-center mb-10"
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.6 }}
                                     >
-                                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                                        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
                                             Chat with PDF
                                         </h1>
-                                        <p className="text-lg text-gray-600">
-                                            Upload a PDF and ask questions to get instant answers
+                                        <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+                                            Experience the future of study. Upload your document and start a conversation instantly.
                                         </p>
                                     </MotionWrapper>
 
-                                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                                    <div className="max-w-xl mx-auto">
                                         <PDFUpload onFileSelect={handleFileSelect} />
 
                                         {selectedFile && (
@@ -364,7 +362,7 @@ const ChatWithPDF: NextPage = () => {
                                                 <button
                                                     onClick={handleUpload}
                                                     disabled={isUploading}
-                                                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center gap-2"
+                                                    className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-3"
                                                 >
                                                     {isUploading ? (
                                                         <>
@@ -373,13 +371,13 @@ const ChatWithPDF: NextPage = () => {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <MessageCircle size={20} />
-                                                            Start Chatting
+                                                            <MessageCircle size={22} />
+                                                            Start Conversation
                                                         </>
                                                     )}
                                                 </button>
                                                 {error && (
-                                                    <p className="mt-3 text-red-600 text-sm text-center">{error}</p>
+                                                    <p className="mt-4 text-red-500 text-sm text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>
                                                 )}
                                             </MotionWrapper>
                                         )}
@@ -388,7 +386,7 @@ const ChatWithPDF: NextPage = () => {
                             )}
                         </div>
                     ) : (
-                        // Chat Interface with Sidebar - Show if we have a job OR history
+                        // Sidebar Layout - Show if we have history OR active chat
                         <div className="flex gap-4 h-[calc(100vh-200px)] max-h-[800px]">
                             <ChatHistorySidebar
                                 sessions={sessions}
@@ -401,97 +399,167 @@ const ChatWithPDF: NextPage = () => {
                                 onClose={() => setIsSidebarOpen(false)}
                             />
 
-                            {/* Main Chat Area */}
-                            <div className="flex-1 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
-                                {/* Chat Header */}
-                                <div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => setIsSidebarOpen(true)}
-                                            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-                                        >
-                                            <Menu size={20} />
-                                        </button>
-                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <MessageCircle size={20} className="text-blue-600" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h2 className="font-semibold text-gray-900 truncate">
-                                                {selectedFile?.file?.name}
-                                            </h2>
-                                            <span className="text-xs text-green-600 flex items-center gap-1">
-                                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                                Online
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={startOver}
-                                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                                    >
-                                        Upload New PDF
-                                    </button>
-                                </div>
-
-                                {/* Chat Messages */}
-                                <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-gray-50/50">
-                                    {messages.map((msg, index) => (
-                                        <div
-                                            key={index}
-                                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                                        >
-                                            <div
-                                                className={`max-w-[80%] rounded-2xl px-5 py-3 ${msg.role === 'user'
-                                                    ? 'bg-blue-600 text-white rounded-br-none'
-                                                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
-                                                    }`}
+                            {/* Main Area: Either Chat or Upload */}
+                            {currentSessionId || jobId ? (
+                                // Chat Interface
+                                <div className="flex-1 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
+                                    {/* Chat Header */}
+                                    <div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setIsSidebarOpen(true)}
+                                                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
                                             >
-                                                {msg.role === 'user' ? (
-                                                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                                                ) : (
-                                                    <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:mb-2 prose-headings:mt-3">
-                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                            {msg.content}
-                                                        </ReactMarkdown>
-                                                    </div>
-                                                )}
+                                                <Menu size={20} />
+                                            </button>
+                                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <MessageCircle size={20} className="text-blue-600" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h2 className="font-semibold text-gray-900 truncate">
+                                                    {selectedFile?.file?.name}
+                                                </h2>
+                                                <span className="text-xs text-green-600 flex items-center gap-1">
+                                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                    Online
+                                                </span>
                                             </div>
                                         </div>
-                                    ))}
-                                    {isLoading && (
-                                        <div className="flex justify-start">
-                                            <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-none px-5 py-4 shadow-sm flex items-center gap-2">
-                                                <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
-                                                <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                                                <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div ref={messagesEndRef} />
-                                </div>
-
-                                {/* Input Area */}
-                                <div className="p-4 bg-white border-t border-gray-100">
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={inputValue}
-                                            onChange={(e) => setInputValue(e.target.value)}
-                                            onKeyPress={handleKeyPress}
-                                            placeholder="Ask a question about your PDF..."
-                                            className="w-full pl-5 pr-14 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                            disabled={isLoading}
-                                        />
                                         <button
-                                            onClick={sendMessage}
-                                            disabled={!inputValue.trim() || isLoading}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                            onClick={startOver}
+                                            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                                         >
-                                            <Send size={18} />
+                                            Upload New PDF
                                         </button>
                                     </div>
+
+                                    {/* Chat Messages */}
+                                    <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-gray-50/50">
+                                        {messages.map((msg, index) => (
+                                            <div
+                                                key={index}
+                                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                            >
+                                                <div
+                                                    className={`max-w-[80%] rounded-2xl px-5 py-3 ${msg.role === 'user'
+                                                        ? 'bg-blue-600 text-white rounded-br-none'
+                                                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
+                                                        }`}
+                                                >
+                                                    {msg.role === 'user' ? (
+                                                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                                                    ) : (
+                                                        <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:mb-2 prose-headings:mt-3">
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                {msg.content}
+                                                            </ReactMarkdown>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isLoading && (
+                                            <div className="flex justify-start">
+                                                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-none px-5 py-4 shadow-sm flex items-center gap-2">
+                                                    <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
+                                                    <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
+                                                    <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+
+                                    {/* Input Area */}
+                                    <div className="p-4 bg-white border-t border-gray-100">
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={inputValue}
+                                                onChange={(e) => setInputValue(e.target.value)}
+                                                onKeyPress={handleKeyPress}
+                                                placeholder="Ask a question about your PDF..."
+                                                className="w-full pl-5 pr-14 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                                disabled={isLoading}
+                                            />
+                                            <button
+                                                onClick={sendMessage}
+                                                disabled={!inputValue.trim() || isLoading}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                <Send size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                // Upload View Inside Layout (New Chat Mode)
+                                <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+                                    <div className="max-w-xl w-full">
+                                        {processingStage ? (
+                                            <MotionWrapper
+                                                as="div"
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                <ProcessingAnimation
+                                                    stage={processingStage}
+                                                    fileName={selectedFile?.file?.name}
+                                                    progress={processingProgress}
+                                                />
+                                            </MotionWrapper>
+                                        ) : (
+                                            <>
+                                                <MotionWrapper
+                                                    as="div"
+                                                    className="text-center mb-10"
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.6 }}
+                                                >
+                                                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                                                        Start a New Chat
+                                                    </h2>
+                                                    <p className="text-gray-500">
+                                                        Upload a new PDF to begin
+                                                    </p>
+                                                </MotionWrapper>
+                                                <PDFUpload onFileSelect={handleFileSelect} />
+                                                {selectedFile && (
+                                                    <MotionWrapper
+                                                        as="div"
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        className="mt-6"
+                                                    >
+                                                        <button
+                                                            onClick={handleUpload}
+                                                            disabled={isUploading}
+                                                            className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-3"
+                                                        >
+                                                            {isUploading ? (
+                                                                <>
+                                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                                    Processing...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <MessageCircle size={22} />
+                                                                    Start Conversation
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                        {error && (
+                                                            <p className="mt-4 text-red-500 text-sm text-center font-medium bg-red-50 py-2 rounded-lg">{error}</p>
+                                                        )}
+                                                    </MotionWrapper>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

@@ -95,11 +95,10 @@ export function PDFUpload({ onFileSelect, maxSize = 50 * 1024 * 1024, className 
       {!selectedFile ? (
         <MotionWrapper
           as="div"
-          className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all ${
-            isDragging
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-          } ${error ? 'border-red-500 bg-red-50' : ''}`}
+          className={`bg-white shadow-xl shadow-blue-50/50 rounded-3xl border border-gray-100 p-8 sm:p-12 text-center transition-all ${isDragging
+              ? 'border-blue-500 ring-4 ring-blue-50'
+              : 'hover:border-blue-300 hover:shadow-2xl hover:shadow-blue-100/50'
+            } ${error ? 'border-red-500 bg-red-50' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -121,29 +120,34 @@ export function PDFUpload({ onFileSelect, maxSize = 50 * 1024 * 1024, className 
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Upload size={32} className="text-blue-600" />
+            <div className="mb-6 relative w-48 h-48 sm:w-64 sm:h-64 transition-transform duration-300 group-hover:scale-105">
+              <img
+                src="/upload-illustration.png"
+                alt="Upload Document"
+                className="w-full h-full object-contain drop-shadow-xl"
+              />
             </div>
 
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-              Drop your PDF here
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Upload your PDF
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
-              or click to browse
+            <p className="text-sm sm:text-base text-gray-500 mb-8 max-w-xs mx-auto">
+              Drag & drop your file here, or click to browse
             </p>
 
             <MotionWrapper
               as="label"
               htmlFor="pdf-upload"
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3.5 bg-[#4F46E5] text-white rounded-2xl cursor-pointer hover:bg-[#4338CA] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-base font-semibold flex items-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              Select PDF File
+              <Upload size={20} />
+              Select Document
             </MotionWrapper>
 
-            <p className="text-xs text-gray-500 mt-4">
-              Maximum file size: {(maxSize / 1024 / 1024).toFixed(0)}MB
+            <p className="text-xs text-gray-400 mt-6 font-medium">
+              PDFs up to {(maxSize / 1024 / 1024).toFixed(0)}MB
             </p>
           </MotionWrapper>
         </MotionWrapper>
