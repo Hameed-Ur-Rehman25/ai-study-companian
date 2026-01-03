@@ -1,16 +1,18 @@
+
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import { Header } from '../components/Header'
 import { HeroSection } from '../components/HeroSection'
 import { PopularTools } from '../components/PopularTools'
 import { SimpleTasks } from '../components/SimpleTasks'
+import { FAQ } from '../components/FAQ'
+import { Pricing } from '../components/Pricing'
 import { Footer } from '../components/Footer'
 import { HomeController } from '../controllers/HomeController'
 
 const Home: NextPage = () => {
     // Use controller to get page data (MVC pattern)
     const { seoData, structuredData, tools } = HomeController.getHomePageData()
-    const imageUrl = `${seoData.canonical}/og-image.jpg`
 
     return (
         <>
@@ -22,7 +24,6 @@ const Home: NextPage = () => {
                 {seoData.keywords && <meta name="keywords" content={seoData.keywords} />}
                 <meta name="author" content="AI Study Companion" />
                 <meta name="robots" content="index, follow" />
-                <meta name="language" content="English" />
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
                 <link rel="icon" href="/favicon.ico" />
                 {seoData.canonical && <link rel="canonical" href={seoData.canonical} />}
@@ -43,24 +44,25 @@ const Home: NextPage = () => {
                 {seoData.twitterDescription && <meta name="twitter:description" content={seoData.twitterDescription} />}
                 {seoData.twitterImage && <meta name="twitter:image" content={seoData.twitterImage} />}
 
-                {/* Additional SEO */}
-                {seoData.themeColor && <meta name="theme-color" content={seoData.themeColor} />}
-                <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
                 {/* Structured Data */}
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
                 />
             </Head>
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-gray-50 scroll-smooth">
                 <Header />
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <main className="pt-4 sm:pt-6">
                         <HeroSection />
                         <PopularTools tools={tools} />
                         <SimpleTasks />
+                        <div id="pricing">
+                            <Pricing />
+                        </div>
+                        <div id="faq">
+                            <FAQ />
+                        </div>
                     </main>
                 </div>
                 <Footer />

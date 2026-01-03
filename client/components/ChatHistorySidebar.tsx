@@ -9,6 +9,7 @@ interface ChatHistorySidebarProps {
     onSessionSelect: (sessionId: string) => void
     onNewChat: () => void
     onNewSession?: () => void
+    onDeleteSession?: (sessionId: string) => void
     isOpen: boolean
     onClose: () => void
 }
@@ -19,6 +20,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     onSessionSelect,
     onNewChat,
     onNewSession,
+    onDeleteSession,
     isOpen,
     onClose
 }) => {
@@ -90,6 +92,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                                         session={session}
                                         isActive={session.session_id === currentSessionId}
                                         onClick={() => onSessionSelect(session.session_id)}
+                                        onDelete={onDeleteSession}
                                     />
                                 ))}
                             </div>

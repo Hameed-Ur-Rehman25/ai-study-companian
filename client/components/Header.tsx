@@ -1,12 +1,19 @@
+
 import { useState, useEffect, useRef } from 'react'
-import { Menu, X, ChevronDown, Video, MessageCircle, Sparkles, FileText } from 'lucide-react'
+import { Menu, X, ChevronDown, Video, MessageCircle, Sparkles, FileText, User as UserIcon, LogOut } from 'lucide-react'
 import Link from 'next/link'
+import { useAuth } from '../context/AuthContext'
+import { useRouter } from 'next/router'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isToolsDropdownOpen, setIsToolsDropdownOpen] = useState(false)
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const profileDropdownRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { user, signOut } = useAuth()
+  const router = useRouter()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -14,16 +21,19 @@ export function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsToolsDropdownOpen(false)
       }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false)
+      }
     }
 
-    if (isToolsDropdownOpen) {
+    if (isToolsDropdownOpen || isProfileDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isToolsDropdownOpen])
+  }, [isToolsDropdownOpen, isProfileDropdownOpen])
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -62,6 +72,12 @@ export function Header() {
     { icon: FileText, label: 'All PDF Tools', description: 'View all tools' },
   ]
 
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+    setIsMenuOpen(false)
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -75,7 +91,7 @@ export function Header() {
               PDF AI Studio
             </span>
           </Link>
-          
+
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             <div className="relative" ref={dropdownRef}>
@@ -85,17 +101,17 @@ export function Header() {
                 className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-1.5 transition-all text-sm font-medium group"
               >
                 Tools
-                <ChevronDown 
-                  size={16} 
+                <ChevronDown
+                  size={16}
                   className={`transition-transform ${isToolsDropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
-              
+
               {/* Dropdown Menu */}
               {isToolsDropdownOpen && (
                 <div
                   onMouseLeave={() => setIsToolsDropdownOpen(false)}
-                  className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden py-2 animate-\[fadeIn_0\.2s_ease-in-out\]"
+                  className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden py-2 animate-[fadeIn_0.2s_ease-in-out]"
                 >
                   {toolsMenuItems.map((item, index) => (
                     <Link
@@ -119,39 +135,57 @@ export function Header() {
             </div>
 
             <Link
-              href="#features"
-              className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-sm font-medium"
-            >
-              AI Features
-            </Link>
-            <Link
-              href="#pricing"
+              href="/#pricing"
               className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-sm font-medium"
             >
               Pricing
             </Link>
             <Link
-              href="#resources"
+              href="/#faq"
               className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-sm font-medium"
             >
-              Resources
+              FAQ
             </Link>
-            <Link
-              href="#about"
-              className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all text-sm font-medium"
-            >
-              About
-            </Link>
+
           </nav>
-          
+
           {/* Desktop CTA Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 text-sm font-medium transition-all">
-              Sign In
-            </button>
-            <button className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 text-sm font-medium shadow-md hover:shadow-lg transition-all">
-              Free Trial
-            </button>
+            {user ? (
+              <div className="relative" ref={profileDropdownRef}>
+                <button
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-all"
+                >
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <UserIcon size={18} className="text-blue-600" />
+                  </div>
+                  <span className="text-sm font-medium">{user.email?.split('@')[0]}</span>
+                  <ChevronDown size={14} />
+                </button>
+                {isProfileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden py-1 animate-[fadeIn_0.2s_ease-in-out]">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link href="/login" className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 text-sm font-medium transition-all">
+                  Sign In
+                </Link>
+                <Link href="/signup" className="px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 text-sm font-medium shadow-md hover:shadow-lg transition-all">
+                  Sign Up
+                </Link>
+              </>
+            )}
+
           </div>
 
           {/* Mobile Menu Button */}
@@ -168,9 +202,8 @@ export function Header() {
         {/* Mobile Menu */}
         <div
           ref={menuRef}
-          className={`lg:hidden fixed inset-0 top-16 sm:top-20 bg-white z-40 transform transition-transform duration-300 ease-in-out ${
-            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+          className={`lg:hidden fixed inset-0 top-16 sm:top-20 bg-white z-40 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
         >
           <div className="h-full overflow-y-auto px-4 py-6">
             <nav className="flex flex-col gap-1">
@@ -181,8 +214,8 @@ export function Header() {
                   className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium"
                 >
                   <span>Tools</span>
-                  <ChevronDown 
-                    size={18} 
+                  <ChevronDown
+                    size={18}
                     className={`transition-transform ${isToolsDropdownOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
@@ -209,47 +242,44 @@ export function Header() {
               </div>
 
               <Link
-                href="#features"
-                onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium"
-              >
-                AI Features
-              </Link>
-              <Link
-                href="#pricing"
+                href="/#pricing"
                 onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium"
               >
                 Pricing
               </Link>
               <Link
-                href="#resources"
+                href="/#faq"
                 onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium"
               >
-                Resources
-              </Link>
-              <Link
-                href="#about"
-                onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium"
-              >
-                About
+                FAQ
               </Link>
 
               <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 text-sm font-medium shadow-md transition-all"
-                >
-                  Free Trial
-                </button>
+                {user ? (
+                  <>
+                    <div className="px-4 py-2 text-sm text-gray-500">
+                      Signed in as <span className="font-semibold text-gray-900">{user.email}</span>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full px-4 py-2.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full block text-center px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors">
+                      Sign In
+                    </Link>
+                    <Link href="/signup" onClick={() => setIsMenuOpen(false)} className="w-full block text-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 text-sm font-medium shadow-md transition-all">
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>
@@ -258,4 +288,3 @@ export function Header() {
     </header>
   );
 }
-

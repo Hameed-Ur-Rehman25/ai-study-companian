@@ -4,6 +4,7 @@ AI routes for Chat and Summary features
 import logging
 from typing import List, Dict, Optional
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from app.services.pdf_service import PDFService
 from app.services.storage_service import StorageService
@@ -33,8 +34,13 @@ def get_ai_service():
 def get_chunking_service():
     return ChunkingService()
 
-def get_chat_history_service():
-    return ChatHistoryService()
+from app.api.dependencies import get_current_user, security
+
+def get_chat_history_service(
+    user: dict = Depends(get_current_user), 
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    return ChatHistoryService(user_id=user.id, access_token=credentials.credentials)
 
 @router.post("/chat")
 async def chat_with_pdf(
@@ -75,6 +81,7 @@ async def chat_with_pdf(
         
         # Get user's current question
         current_question = request.messages[-1]['content'] if request.messages else ""
+        print(f"DEBUG: Current question: {current_question}")
         
         # Create chunks and get relevant ones
         chunks = chunking_service.create_chunks(full_text)
@@ -84,7 +91,9 @@ async def chat_with_pdf(
         logger.info(f"Using {len(relevant_chunks)} chunks for context")
         
         # Get response from AI service
+        print("DEBUG: Calling AI service...")
         response = await ai_service.chat_with_pdf(context, request.messages)
+        print("DEBUG: AI service response received")
         
         # Save messages to history
         chat_history_service.add_messages(session_id, current_question, response)
@@ -97,6 +106,9 @@ async def chat_with_pdf(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"DEBUG: Error in chat endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         logger.error(f"Error in chat endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -144,6 +156,20 @@ async def summarize_pdf(
         raise
     except Exception as e:
         logger.error(f"Error in summary endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/sessions")
+async def get_all_sessions(
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service)
+):
+    """
+    Get all chat sessions for the current user across all jobs
+    """
+    try:
+        sessions = chat_history_service.get_all_sessions()
+        return {"sessions": sessions}
+    except Exception as e:
+        logger.error(f"Error getting all sessions: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sessions/{job_id}")

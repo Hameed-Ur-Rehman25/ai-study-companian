@@ -1,122 +1,142 @@
+
 """
-Chat History Service for managing persistent chat sessions
+Chat History Service for managing persistent chat sessions using Supabase
 """
-import json
 import logging
 import uuid
-from pathlib import Path
 from typing import List, Optional, Dict
 from datetime import datetime
 from app.models.chat_models import ChatSession, ChatMessage, ChatSessionWithMessages
+from app.core.supabase import supabase, SUPABASE_URL, SUPABASE_KEY
+from supabase import create_client, ClientOptions
 
 logger = logging.getLogger(__name__)
 
 
 class ChatHistoryService:
-    """Service for managing chat history persistence"""
+    """Service for managing chat history persistence via Supabase"""
     
-    def __init__(self, storage_dir: str = "storage/sessions"):
+    def __init__(self, user_id: Optional[str] = None):
         """
         Initialize chat history service
         
         Args:
-            storage_dir: Directory to store session files
+            user_id: The ID of the authenticated user. Required for most operations.
         """
-        self.storage_dir = Path(storage_dir)
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self.index_file = self.storage_dir / "index.json"
-        self._ensure_index()
-    
-    def _ensure_index(self):
-        """Ensure index file exists"""
-        if not self.index_file.exists():
-            self.index_file.write_text(json.dumps({}))
-    
-    def _load_index(self) -> Dict[str, List[str]]:
+    def __init__(self, user_id: Optional[str] = None, access_token: Optional[str] = None):
         """
-        Load session index
+        Initialize chat history service
         
-        Returns:
-            Dictionary mapping job_id to list of session_ids
+        Args:
+            user_id: The ID of the authenticated user. Required for most operations.
+            access_token: The access token of the authenticated user. Required for RLS.
         """
-        try:
-            return json.loads(self.index_file.read_text())
-        except Exception as e:
-            logger.error(f"Error loading index: {e}")
-            return {}
-    
-    def _save_index(self, index: Dict[str, List[str]]):
-        """Save session index"""
-        try:
-            self.index_file.write_text(json.dumps(index, indent=2))
-        except Exception as e:
-            logger.error(f"Error saving index: {e}")
+        self.user_id = user_id
+        
+        if access_token:
+            # Create a new client with the user's token
+            self.client = create_client(
+                SUPABASE_URL, 
+                SUPABASE_KEY, 
+                options=ClientOptions(
+                    headers={"Authorization": f"Bearer {access_token}"}
+                )
+            )
+        else:
+            # Fallback to global client (server-side operations or logic matching)
+            self.client = supabase
     
     def create_session(self, job_id: str, pdf_filename: str) -> ChatSession:
         """
         Create a new chat session
-        
-        Args:
-            job_id: PDF job ID
-            pdf_filename: Name of the PDF file
-            
-        Returns:
-            New ChatSession
         """
-        session_id = str(uuid.uuid4())
-        now = datetime.now().isoformat()
-        
-        session = ChatSession(
-            session_id=session_id,
-            job_id=job_id,
-            pdf_filename=pdf_filename,
-            created_at=now,
-            updated_at=now
-        )
-        
-        # Save session
-        session_data = ChatSessionWithMessages(
-            session=session,
-            messages=[]
-        )
-        self._save_session(session_data)
-        
-        # Update index
-        index = self._load_index()
-        if job_id not in index:
-            index[job_id] = []
-        index[job_id].append(session_id)
-        self._save_index(index)
-        
-        logger.info(f"Created new session {session_id} for job {job_id}")
-        return session
-    
-    def _save_session(self, session_data: ChatSessionWithMessages):
-        """Save session to file"""
-        session_file = self.storage_dir / f"{session_data.session.session_id}.json"
+        if not self.user_id:
+             raise ValueError("User ID is required to create a session")
+
         try:
-            session_file.write_text(session_data.model_dump_json(indent=2))
+            print(f"DEBUG: Creating session for user {self.user_id} and job {job_id}")
+            response = self.client.table("chat_sessions").insert({
+                "user_id": self.user_id,
+                "job_id": job_id,
+                "pdf_filename": pdf_filename
+            }).execute()
+            
+            if not response.data:
+                 raise Exception("Failed to create session in Supabase")
+
+            data = response.data[0]
+            
+            return ChatSession(
+                session_id=data['id'],
+                job_id=data['job_id'],
+                pdf_filename=data['pdf_filename'],
+                created_at=data['created_at'],
+                updated_at=data['updated_at']
+            )
+
         except Exception as e:
-            logger.error(f"Error saving session: {e}")
+            logger.error(f"Error creating session: {e}")
+            # Fallback for now if DB fails -> Return a dummy session to not crash, 
+            # OR re-raise. Implementing re-raise for better error handling.
+            raise e
     
     def get_session(self, session_id: str) -> Optional[ChatSessionWithMessages]:
         """
         Get a session with all messages
-        
-        Args:
-            session_id: Session ID
-            
-        Returns:
-            ChatSessionWithMessages or None
         """
-        session_file = self.storage_dir / f"{session_id}.json"
-        
-        if not session_file.exists():
-            return None
-        
+        if not self.user_id:
+             logger.warning("Attempting to get session without user_id")
+
         try:
-            data = json.loads(session_file.read_text())
-            return ChatSessionWithMessages(**data)
+            # 1. Get Session
+            session_query = self.client.table("chat_sessions").select("*").eq("id", session_id)
+            
+            # Apply RLS via user_id check implicitly by policy, but good to be explicit if needed
+            # In standard Supabase RLS, auth.uid() handles it. Here we use the service role 
+            # or the user's token. Since we are using the python client initialized with ANON key,
+            # RLS policies might require us to Set-Cookie or pass JWT. 
+            # HOWEVER: The python client usually runs as admin or processes requests.
+            # CRITICAL: The prompt implies we are just "connecting". 
+            # If using ANON KEY from server side, we don't have the user context attached to the client instance automatically.
+            # We strictly rely on the `user_id` filtering in our queries if RLS allows it, OR we need the user's JWT.
+            #
+            # BUT: We are setting `user_id` in the constructor. We should filter by it manually as a safeguard.
+            if self.user_id:
+                session_query = session_query.eq("user_id", self.user_id)
+                
+            session_res = session_query.execute()
+            
+            if not session_res.data:
+                return None
+            
+            session_data = session_res.data[0]
+            
+            # 2. Get Messages
+            messages_res = self.client.table("chat_messages")\
+                .select("*")\
+                .eq("session_id", session_id)\
+                .order("timestamp", desc=False)\
+                .execute()
+                
+            messages = []
+            for msg in messages_res.data:
+                messages.append(ChatMessage(
+                    role=msg['role'],
+                    content=msg['content'],
+                    timestamp=msg['timestamp']
+                ))
+                
+            return ChatSessionWithMessages(
+                session=ChatSession(
+                    session_id=session_data['id'],
+                    job_id=session_data['job_id'],
+                    pdf_filename=session_data['pdf_filename'],
+                    created_at=session_data['created_at'],
+                    updated_at=session_data['updated_at']
+                ),
+                messages=messages
+            )
+            
         except Exception as e:
             logger.error(f"Error loading session {session_id}: {e}")
             return None
@@ -124,25 +144,61 @@ class ChatHistoryService:
     def get_sessions_by_job(self, job_id: str) -> List[ChatSession]:
         """
         Get all sessions for a job
-        
-        Args:
-            job_id: PDF job ID
-            
-        Returns:
-            List of ChatSession objects
         """
-        index = self._load_index()
-        session_ids = index.get(job_id, [])
-        
-        sessions = []
-        for session_id in session_ids:
-            session_data = self.get_session(session_id)
-            if session_data:
-                sessions.append(session_data.session)
-        
-        # Sort by updated_at (most recent first)
-        sessions.sort(key=lambda x: x.updated_at, reverse=True)
-        return sessions
+        if not self.user_id:
+            return []
+
+        try:
+            response = self.client.table("chat_sessions")\
+                .select("*")\
+                .eq("job_id", job_id)\
+                .eq("user_id", self.user_id)\
+                .order("updated_at", desc=True)\
+                .execute()
+                
+            sessions = []
+            for data in response.data:
+                sessions.append(ChatSession(
+                    session_id=data['id'],
+                    job_id=data['job_id'],
+                    pdf_filename=data['pdf_filename'],
+                    created_at=data['created_at'],
+                    updated_at=data['updated_at']
+                ))
+            return sessions
+            
+        except Exception as e:
+            logger.error(f"Error getting sessions: {e}")
+            return []
+
+    def get_all_sessions(self) -> List[ChatSession]:
+        """
+        Get all sessions for the current user (across all jobs)
+        """
+        if not self.user_id:
+            return []
+
+        try:
+            response = self.client.table("chat_sessions")\
+                .select("*")\
+                .eq("user_id", self.user_id)\
+                .order("updated_at", desc=True)\
+                .execute()
+                
+            sessions = []
+            for data in response.data:
+                sessions.append(ChatSession(
+                    session_id=data['id'],
+                    job_id=data['job_id'],
+                    pdf_filename=data['pdf_filename'],
+                    created_at=data['created_at'],
+                    updated_at=data['updated_at']
+                ))
+            return sessions
+            
+        except Exception as e:
+            logger.error(f"Error getting all sessions: {e}")
+            return []
     
     def add_messages(
         self, 
@@ -152,77 +208,67 @@ class ChatHistoryService:
     ) -> bool:
         """
         Add messages to a session
-        
-        Args:
-            session_id: Session ID
-            user_message: User's message content
-            model_response: Model's response content
-            
-        Returns:
-            True if successful
         """
-        session_data = self.get_session(session_id)
-        
-        if not session_data:
-            logger.error(f"Session {session_id} not found")
+        try:
+            print(f"DEBUG: Adding messages to session {session_id}")
+            # Insert User Message
+            self.client.table("chat_messages").insert({
+                "session_id": session_id,
+                "role": "user",
+                "content": user_message
+            }).execute()
+            
+            # Insert Model Message
+            self.client.table("chat_messages").insert({
+                "session_id": session_id,
+                "role": "model",
+                "content": model_response
+            }).execute()
+            
+            # Update Session Timestamp
+            self.client.table("chat_sessions").update({
+                "updated_at": datetime.now().isoformat()
+            }).eq("id", session_id).execute()
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error adding messages: {e}")
             return False
-        
-        now = datetime.now().isoformat()
-        
-        # Add user message
-        session_data.messages.append(ChatMessage(
-            role="user",
-            content=user_message,
-            timestamp=now
-        ))
-        
-        # Add model response
-        session_data.messages.append(ChatMessage(
-            role="model",
-            content=model_response,
-            timestamp=now
-        ))
-        
-        # Update session timestamp
-        session_data.session.updated_at = now
-        
-        # Save
-        self._save_session(session_data)
-        logger.info(f"Added messages to session {session_id}")
-        return True
     
     def delete_session(self, session_id: str) -> bool:
         """
-        Delete a session
-        
-        Args:
-            session_id: Session ID
-            
-        Returns:
-            True if successful
+        Delete a session and its messages (Manual Cascade)
         """
-        session_file = self.storage_dir / f"{session_id}.json"
-        
-        if not session_file.exists():
+        if not self.user_id:
             return False
-        
+
         try:
-            # Get session to find job_id
-            session_data = self.get_session(session_id)
-            if session_data:
-                # Remove from index
-                index = self._load_index()
-                job_id = session_data.session.job_id
-                if job_id in index and session_id in index[job_id]:
-                    index[job_id].remove(session_id)
-                    if not index[job_id]:  # Remove job if no sessions left
-                        del index[job_id]
-                    self._save_index(index)
+            # 1. Verify ownership and existence
+            # We select first to ensure the user owns the session before attempting to delete messages
+            check = self.client.table("chat_sessions")\
+                .select("id")\
+                .eq("id", session_id)\
+                .eq("user_id", self.user_id)\
+                .execute()
+                
+            if not check.data:
+                logger.warning(f"User {self.user_id} attempted to delete non-existent/unauthorized session {session_id}")
+                return False
+
+            # 2. Delete messages (Explicitly cleanup to ensure no orphans if Cascade is missing)
+            # Note: RLS on chat_messages should allow this if policies are correct. 
+            # If not, and ON DELETE CASCADE exists, the next step handles it.
+            try:
+                self.client.table("chat_messages").delete().eq("session_id", session_id).execute()
+            except Exception as msg_err:
+                logger.warning(f"Could not explicitly delete messages for session {session_id}: {msg_err}")
+                # Continue to try deleting session anyway (relying on DB cascade as backup)
+
+            # 3. Delete session
+            res = self.client.table("chat_sessions").delete().eq("id", session_id).eq("user_id", self.user_id).execute()
+            return len(res.data) > 0
             
-            # Delete file
-            session_file.unlink()
-            logger.info(f"Deleted session {session_id}")
-            return True
         except Exception as e:
             logger.error(f"Error deleting session {session_id}: {e}")
             return False

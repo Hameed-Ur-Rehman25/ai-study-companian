@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/router'
+import { useAuth } from '../context/AuthContext'
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import { Header } from '../components/Header'
@@ -17,12 +19,48 @@ import remarkGfm from 'remark-gfm'
 type ProcessStage = 'uploading' | 'extracting' | 'processing' | null
 
 const ChatWithPDF: NextPage = () => {
+    const { user, loading } = useAuth()
+    const router = useRouter()
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login')
+        }
+    }, [user, loading, router])
+
+    // Initial session load
+    useEffect(() => {
+        if (user && !loading) {
+            loadAllSessions()
+        }
+    }, [user, loading])
+
+    const loadAllSessions = async () => {
+        try {
+            setIsInitialLoading(true)
+            const allSessions = await ChatController.getAllSessions()
+            setSessions(allSessions)
+
+            // If sessions exist, auto-load the most recent one
+            if (allSessions.length > 0 && !jobId) {
+                const mostRecent = allSessions[0]
+                setJobId(mostRecent.job_id)
+                await loadSession(mostRecent.session_id)
+            }
+        } catch (err) {
+            console.error('Failed to load global sessions:', err)
+        } finally {
+            setIsInitialLoading(false)
+        }
+    }
+
     const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
     const [jobId, setJobId] = useState<string | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [processingStage, setProcessingStage] = useState<ProcessStage>(null)
     const [processingProgress, setProcessingProgress] = useState(0)
     const [error, setError] = useState<string | null>(null)
+    const [isInitialLoading, setIsInitialLoading] = useState(true)
 
     // Chat state
     const [messages, setMessages] = useState<Message[]>([])
@@ -33,6 +71,14 @@ const ChatWithPDF: NextPage = () => {
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+    if (loading || !user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        )
+    }
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -47,7 +93,9 @@ const ChatWithPDF: NextPage = () => {
     // Load sessions when jobId changes
     useEffect(() => {
         if (jobId) {
-            loadSessions()
+            // Check if we need to reload sessions specific to this job, 
+            // but we might already have them from global load.
+            // For now, let's keep it simple and rely on global load or manual updates
         }
     }, [jobId])
 
@@ -232,6 +280,27 @@ const ChatWithPDF: NextPage = () => {
         setInputValue('')
     }
 
+    const handleDeleteSession = async (sessionId: string) => {
+        if (!confirm('Are you sure you want to delete this chat session?')) return
+
+        try {
+            await ChatController.deleteSession(sessionId)
+
+            // Update local state by removing deleted session
+            setSessions(prev => prev.filter(s => s.session_id !== sessionId))
+
+            // If deleted session was active, clear view or switch to another
+            if (currentSessionId === sessionId) {
+                handleNewChat()
+                // Optionally reload sessions to get fresh state, but local filter is faster
+                // await loadAllSessions()
+            }
+        } catch (err) {
+            console.error('Failed to delete session:', err)
+            setError('Failed to delete chat session')
+        }
+    }
+
     return (
         <>
             <Head>
@@ -243,8 +312,13 @@ const ChatWithPDF: NextPage = () => {
                 <Header />
 
                 <div className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8 sm:py-12">
-                    {!jobId ? (
-                        // Upload View
+                    {isInitialLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                            <p className="text-gray-500">Loading your chats...</p>
+                        </div>
+                    ) : !jobId && sessions.length === 0 ? (
+                        // Upload View - Only show if no active job AND no history
                         <div className="max-w-2xl mx-auto">
                             {processingStage ? (
                                 // Show processing animation
@@ -314,7 +388,7 @@ const ChatWithPDF: NextPage = () => {
                             )}
                         </div>
                     ) : (
-                        // Chat Interface with Sidebar
+                        // Chat Interface with Sidebar - Show if we have a job OR history
                         <div className="flex gap-4 h-[calc(100vh-200px)] max-h-[800px]">
                             <ChatHistorySidebar
                                 sessions={sessions}
@@ -322,6 +396,7 @@ const ChatWithPDF: NextPage = () => {
                                 onSessionSelect={loadSession}
                                 onNewChat={handleNewChat}
                                 onNewSession={handleNewSessionWithSamePDF}
+                                onDeleteSession={handleDeleteSession}
                                 isOpen={isSidebarOpen}
                                 onClose={() => setIsSidebarOpen(false)}
                             />
