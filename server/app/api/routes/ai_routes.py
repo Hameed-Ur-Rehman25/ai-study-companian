@@ -11,7 +11,9 @@ from app.services.storage_service import StorageService
 from app.services.groq_service import GroqService
 from app.services.chunking_service import ChunkingService
 from app.services.chat_history_service import ChatHistoryService
+from app.services.summary_history_service import SummaryHistoryService
 from app.models.chat_models import ChatSession, ChatSessionWithMessages, CreateSessionRequest
+from app.models.summary_models import PDFSummary
 from app.api.dependencies import get_pdf_service, get_storage_service
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,12 @@ def get_chat_history_service(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     return ChatHistoryService(user_id=user.id, access_token=credentials.credentials)
+
+def get_summary_history_service(
+    user: dict = Depends(get_current_user), 
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    return SummaryHistoryService(user_id=user.id, access_token=credentials.credentials)
 
 @router.post("/chat")
 async def chat_with_pdf(
@@ -117,7 +125,8 @@ async def summarize_pdf(
     request: SummaryRequest,
     storage_service: StorageService = Depends(get_storage_service),
     pdf_service: PDFService = Depends(get_pdf_service),
-    ai_service: GroqService = Depends(get_ai_service)
+    ai_service: GroqService = Depends(get_ai_service),
+    summary_history_service: SummaryHistoryService = Depends(get_summary_history_service)
 ):
     """
     Summarize a PDF document with specified length
@@ -149,6 +158,20 @@ async def summarize_pdf(
             
         # Get summary from AI service with specified length
         summary = await ai_service.summarize_pdf(full_text, length=request.length)
+        
+        # Save summary to history
+        try:
+            pdf_filename = pdf_files[0].name
+            saved_summary = summary_history_service.create_summary(
+                job_id=request.job_id,
+                length=request.length,
+                summary_text=summary,
+                pdf_filename=pdf_filename
+            )
+            logger.info(f"Saved summary for job {request.job_id}")
+        except Exception as save_err:
+            logger.error(f"Failed to save summary: {save_err}")
+            # Don't fail the request if saving fails, just log it
         
         return {"summary": summary}
         
@@ -238,4 +261,35 @@ async def delete_session(
         raise
     except Exception as e:
         logger.error(f"Error deleting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/summaries")
+async def get_all_summaries(
+    summary_history_service: SummaryHistoryService = Depends(get_summary_history_service)
+):
+    """
+    Get all summaries for the current user
+    """
+    try:
+        summaries = summary_history_service.get_all_summaries()
+        return {"summaries": summaries}
+    except Exception as e:
+        logger.error(f"Error getting all summaries: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/summaries/{job_id}")
+async def get_summary(
+    job_id: str,
+    summary_history_service: SummaryHistoryService = Depends(get_summary_history_service)
+):
+    """
+    Get the latest summary for a job
+    """
+    try:
+        summary = summary_history_service.get_latest_summary(job_id)
+        return summary
+    except Exception as e:
+        logger.error(f"Error getting summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
