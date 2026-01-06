@@ -217,7 +217,7 @@ const SummarizePDF: NextPage = () => {
                                 {!summary ? (
                                     // Upload View
                                     <div className="flex-1 flex items-center justify-center overflow-y-auto p-4 sm:p-8">
-                                        <div className="max-w-xl w-full">
+                                        <div className="max-w-3xl w-full">
 
                                             {/* Mobile Menu Button */}
                                             <div className="lg:hidden mb-4">
@@ -263,8 +263,8 @@ const SummarizePDF: NextPage = () => {
                                                         </p>
                                                     </MotionWrapper>
 
-                                                    <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                                                        <PDFUpload onFileSelect={handleFileSelect} />
+                                                    <div className="bg-white rounded-2xl p-6 sm:p-10 shadow-lg border border-gray-100">
+                                                        <PDFUpload onFileSelect={handleFileSelect} variant="compact" />
 
                                                         {/* Summary Length Selector */}
                                                         {selectedFile && (
@@ -419,9 +419,8 @@ const SummarizePDF: NextPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    // Success/Result View
                                     <div className="flex flex-col h-full">
-                                        <div className="bg-emerald-600 px-6 py-4 sm:px-8 text-white flex items-center justify-between gap-4 flex-shrink-0">
+                                        <div className="bg-emerald-600 px-6 py-4 sm:px-8 text-white flex items-center justify-between gap-4 flex-shrink-0 shadow-md">
                                             <div className="flex items-center gap-3">
                                                 <button
                                                     onClick={() => setIsSidebarOpen(true)}
@@ -437,18 +436,32 @@ const SummarizePDF: NextPage = () => {
                                                     <p className="text-emerald-100 text-sm opacity-90">AI Generated Summary • <span className="capitalize">{summaryLength}</span></p>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={handleNewSummary}
-                                                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors flex items-center gap-2 text-sm font-medium whitespace-nowrap"
-                                            >
-                                                <RefreshCw size={16} />
-                                                <span className="hidden sm:inline">Summarize Another</span>
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        if (summary) {
+                                                            navigator.clipboard.writeText(summary)
+                                                            // Could add toast here
+                                                        }
+                                                    }}
+                                                    className="px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg backdrop-blur-sm transition-colors flex items-center gap-2 text-sm font-medium whitespace-nowrap"
+                                                    title="Copy to Clipboard"
+                                                >
+                                                    <span className="hidden sm:inline">Copy</span>
+                                                </button>
+                                                <button
+                                                    onClick={handleNewSummary}
+                                                    className="px-4 py-2 bg-white text-emerald-700 hover:bg-emerald-50 rounded-lg shadow-sm transition-colors flex items-center gap-2 text-sm font-bold whitespace-nowrap"
+                                                >
+                                                    <RefreshCw size={16} />
+                                                    <span className="hidden sm:inline">New Summary</span>
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="flex-1 overflow-y-auto p-6 sm:p-10 bg-gray-50/50">
-                                            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-8 sm:p-12">
-                                                <div className="prose prose-lg max-w-none prose-emerald prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700">
+                                            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-gray-100 p-8 sm:p-12 relative">
+                                                <div className="prose prose-lg max-w-none prose-emerald prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700">
                                                     <ReactMarkdown>{summary}</ReactMarkdown>
                                                 </div>
                                             </div>
@@ -461,7 +474,7 @@ const SummarizePDF: NextPage = () => {
                 </div>
 
                 <Footer />
-            </div>
+            </div >
         </>
     )
 }

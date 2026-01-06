@@ -7,9 +7,15 @@ interface PDFUploadProps {
   onFileSelect: (file: PDFFile) => void
   maxSize?: number // in bytes
   className?: string
+  variant?: 'card' | 'compact'
 }
 
-export function PDFUpload({ onFileSelect, maxSize = 50 * 1024 * 1024, className = '' }: PDFUploadProps) {
+export function PDFUpload({
+  onFileSelect,
+  maxSize = 50 * 1024 * 1024,
+  className = '',
+  variant = 'card'
+}: PDFUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<PDFFile | null>(null)
@@ -90,19 +96,31 @@ export function PDFUpload({ onFileSelect, maxSize = 50 * 1024 * 1024, className 
     return (bytes / 1024 / 1024).toFixed(1) + ' MB'
   }
 
+  const isCompact = variant === 'compact'
+
   return (
     <div className={className}>
       {!selectedFile ? (
         <MotionWrapper
           as="div"
-          className={`bg-white shadow-xl shadow-blue-50/50 rounded-3xl border border-gray-100 p-8 sm:p-12 text-center transition-all ${isDragging
-              ? 'border-blue-500 ring-4 ring-blue-50'
-              : 'hover:border-blue-300 hover:shadow-2xl hover:shadow-blue-100/50'
-            } ${error ? 'border-red-500 bg-red-50' : ''}`}
+          className={`
+            relative rounded-3xl text-center transition-all bg-white
+            ${isCompact
+              ? 'border-2 border-dashed border-gray-200 p-6 sm:p-8 hover:bg-gray-50'
+              : 'shadow-xl shadow-blue-50/50 border border-gray-100 p-8 sm:p-12'
+            }
+            ${isDragging
+              ? 'border-blue-500 ring-4 ring-blue-50 bg-blue-50/10'
+              : isCompact
+                ? 'hover:border-blue-400'
+                : 'hover:border-blue-300 hover:shadow-2xl hover:shadow-blue-100/50'
+            } 
+            ${error ? 'border-red-500 bg-red-50' : ''}
+          `}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          whileHover={{ scale: 1.01 }}
+          whileHover={{ scale: isCompact ? 1.005 : 1.01 }}
         >
           <input
             ref={fileInputRef}
@@ -120,7 +138,10 @@ export function PDFUpload({ onFileSelect, maxSize = 50 * 1024 * 1024, className 
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="mb-6 relative w-48 h-48 sm:w-64 sm:h-64 transition-transform duration-300 group-hover:scale-105">
+            <div className={`
+              mb-6 relative transition-transform duration-300 group-hover:scale-105
+              ${isCompact ? 'w-32 h-32 sm:w-40 sm:h-40' : 'w-48 h-48 sm:w-64 sm:h-64'}
+            `}>
               <img
                 src="/upload-illustration.png"
                 alt="Upload Document"
@@ -128,26 +149,26 @@ export function PDFUpload({ onFileSelect, maxSize = 50 * 1024 * 1024, className 
               />
             </div>
 
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-              Upload your PDF
+            <h3 className={`font-bold text-gray-900 mb-2 ${isCompact ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'}`}>
+              {isCompact ? 'Drop PDF here' : 'Upload your PDF'}
             </h3>
-            <p className="text-sm sm:text-base text-gray-500 mb-8 max-w-xs mx-auto">
-              Drag & drop your file here, or click to browse
+            <p className="text-sm sm:text-base text-gray-500 mb-6 max-w-xs mx-auto px-4">
+              Drag & drop or click to browse
             </p>
 
             <MotionWrapper
               as="label"
               htmlFor="pdf-upload"
-              className="px-8 py-3.5 bg-[#4F46E5] text-white rounded-2xl cursor-pointer hover:bg-[#4338CA] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-base font-semibold flex items-center gap-2"
+              className="px-6 py-2.5 bg-[#4F46E5] text-white rounded-xl cursor-pointer hover:bg-[#4338CA] transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-sm sm:text-base font-semibold flex items-center gap-2"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Upload size={20} />
+              <Upload size={18} />
               Select Document
             </MotionWrapper>
 
-            <p className="text-xs text-gray-400 mt-6 font-medium">
-              PDFs up to {(maxSize / 1024 / 1024).toFixed(0)}MB
+            <p className="text-xs text-gray-400 mt-4 font-medium">
+              Max size: {(maxSize / 1024 / 1024).toFixed(0)}MB
             </p>
           </MotionWrapper>
         </MotionWrapper>
