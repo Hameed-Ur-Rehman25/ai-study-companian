@@ -131,10 +131,12 @@ const SummarizePDF: NextPage = () => {
             setProcessingProgress(70)
 
             // 3. Summarize
+            const { data: { session } } = await import('../utils/supabaseClient').then(mod => mod.supabase.auth.getSession())
             const summaryResponse = await fetch(`${API_BASE_URL}/api/ai/summary`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
                 },
                 body: JSON.stringify({
                     job_id: newJobId,

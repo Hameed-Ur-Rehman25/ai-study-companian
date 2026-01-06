@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config/api'
+import { supabase } from '../utils/supabaseClient'
 
 export interface PDFSummary {
     id: string
@@ -10,15 +11,18 @@ export interface PDFSummary {
 }
 
 export class SummaryController {
+    private static async getAuthHeader(): Promise<Record<string, string>> {
+        const { data: { session } } = await supabase.auth.getSession()
+        return session ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+    }
+
     /**
      * Get all summaries for the current user
      */
     static async getAllSummaries(): Promise<PDFSummary[]> {
-        const token = localStorage.getItem('token')
+        const authHeaders = await this.getAuthHeader()
         const response = await fetch(`${API_BASE_URL}/api/ai/summaries`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { ...authHeaders }
         })
 
         if (!response.ok) {
@@ -33,11 +37,9 @@ export class SummaryController {
      * Get summary by job ID
      */
     static async getSummary(jobId: string): Promise<PDFSummary | null> {
-        const token = localStorage.getItem('token')
+        const authHeaders = await this.getAuthHeader()
         const response = await fetch(`${API_BASE_URL}/api/ai/summaries/${jobId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { ...authHeaders }
         })
 
         if (!response.ok) {

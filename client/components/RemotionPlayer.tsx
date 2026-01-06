@@ -88,9 +88,12 @@ export const RemotionPlayer: React.FC<RemotionPlayerProps> = ({ jobId }) => {
                                     Use the player controls to preview before downloading.
                                 </p>
                             </div>
-                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap">
+                            <button
+                                onClick={() => window.location.href = `http://localhost:8000/api/video/download/${jobId}`}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+                            >
                                 <Download size={16} />
-                                Download
+                                Download MP4
                             </button>
                         </div>
                     </div>

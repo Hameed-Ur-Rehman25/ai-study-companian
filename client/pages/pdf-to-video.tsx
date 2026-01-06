@@ -12,7 +12,6 @@ import { PDFConversionController } from '../controllers/PDFConversionController'
 import { PDFFile, ConversionOptions, ConversionStatus, PDFExtractionResponse } from '../models/Conversion'
 import { Settings, Play, CheckCircle, Upload, ChevronLeft } from 'lucide-react'
 import { MotionWrapper } from '../components/ui/MotionWrapper'
-import { VideoHistorySidebar } from '../components/VideoHistorySidebar'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/router'
 
@@ -132,14 +131,7 @@ const PDFToVideo: NextPage = () => {
       </Head>
 
       <div className="flex h-screen bg-gray-50 overflow-hidden">
-        {/* Sidebar */}
-        <VideoHistorySidebar
-          currentJobId={jobId}
-          onSelectVideo={handleSelectVideo}
-          className="flex-shrink-0"
-        />
-
-        {/* Main Content Area */}
+        {/* Main Content Area - Full Width No Sidebar */}
         <div className="flex-1 flex flex-col min-w-0">
           <Header className="bg-white border-b border-gray-200 sticky top-0 z-30" />
 
