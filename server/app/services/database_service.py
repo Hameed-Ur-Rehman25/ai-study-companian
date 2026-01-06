@@ -116,6 +116,17 @@ class Database:
         conn.commit()
         conn.close()
     
+    def get_total_videos(self) -> int:
+        """Get total number of videos"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) FROM videos")
+        count = cursor.fetchone()[0]
+        
+        conn.close()
+        return count
+
     # Page operations
     def create_page(
         self,

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # Load environment variables immediately
 load_dotenv()
 
-from app.api.routes import pdf_routes, video_routes, ai_routes, video_data_routes
+from app.api.routes import pdf_routes, video_routes, ai_routes, video_data_routes, payment_routes, user_routes
 
 # Configure logging
 
@@ -44,6 +44,8 @@ app.include_router(pdf_routes.router)
 app.include_router(video_routes.router)
 app.include_router(ai_routes.router)
 app.include_router(video_data_routes.router)
+app.include_router(payment_routes.router, prefix="/api/payment", tags=["Payment"])
+app.include_router(user_routes.router, prefix="/api/user", tags=["User"])
 
 # Mount static files
 from fastapi.staticfiles import StaticFiles

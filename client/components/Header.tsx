@@ -165,6 +165,13 @@ export function Header() {
                 </button>
                 {isProfileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden py-1 animate-[fadeIn_0.2s_ease-in-out]">
+                    <Link
+                      href="/dashboard"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <UserIcon size={16} />
+                      Dashboard
+                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -262,6 +269,14 @@ export function Header() {
                     <div className="px-4 py-2 text-sm text-gray-500">
                       Signed in as <span className="font-semibold text-gray-900">{user.email}</span>
                     </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full px-4 py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-sm font-medium transition-colors flex items-center justify-center gap-2 mb-2"
+                    >
+                      <UserIcon size={16} />
+                      Dashboard
+                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="w-full px-4 py-2.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition-colors flex items-center justify-center gap-2"
