@@ -4,7 +4,7 @@ PDF upload and processing routes
 import os
 import uuid
 import logging
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
 from app.models.pdf_models import PDFUploadRequest, PDFExtractionResponse, ConversionRequest
 from app.services.pdf_service import PDFService

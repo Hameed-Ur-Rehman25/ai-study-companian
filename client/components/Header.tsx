@@ -70,10 +70,10 @@ export function Header({ className = '' }: HeaderProps) {
   }, [isMenuOpen])
 
   const toolsMenuItems = [
-    { icon: Video, label: 'PDF to Video', description: 'Convert PDFs to videos' },
-    { icon: MessageCircle, label: 'Chat with PDF', description: 'AI-powered chat' },
-    { icon: Sparkles, label: 'Summarize PDF', description: 'Quick summaries' },
-    { icon: FileText, label: 'All PDF Tools', description: 'View all tools' },
+    { icon: Video, label: 'PDF to Video', description: 'Convert PDFs to videos', href: '/pdf-to-video' },
+    { icon: MessageCircle, label: 'Chat with PDF', description: 'AI-powered chat', href: '/chat-with-pdf' },
+    { icon: Sparkles, label: 'Summarize PDF', description: 'Quick summaries', href: '/summarize-pdf' },
+    { icon: FileText, label: 'All PDF Tools', description: 'View all tools', href: '/#features' },
   ]
 
   const handleSignOut = async () => {
@@ -120,7 +120,7 @@ export function Header({ className = '' }: HeaderProps) {
                   {toolsMenuItems.map((item, index) => (
                     <Link
                       key={index}
-                      href="#"
+                      href={item.href}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors group"
                     >
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -235,7 +235,7 @@ export function Header({ className = '' }: HeaderProps) {
                     {toolsMenuItems.map((item, index) => (
                       <Link
                         key={index}
-                        href="#"
+                        href={item.href}
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 rounded-lg transition-colors"
                       >
