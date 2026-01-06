@@ -82,3 +82,58 @@ class StripeService:
 
     def get_products(self) -> List[Dict[str, Any]]:
         return self.products
+
+    async def handle_webhook(self, payload: bytes, sig_header: str) -> None:
+        """
+        Handle Stripe Webhook
+        """
+        endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+        
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+            )
+        except ValueError as e:
+            # Invalid payload
+            raise HTTPException(status_code=400, detail="Invalid payload")
+        except stripe.error.SignatureVerificationError as e:
+            # Invalid signature
+            raise HTTPException(status_code=400, detail="Invalid signature")
+
+        # Handle the event
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            await self._handle_checkout_session_completed(session)
+            
+        # Add other event types as needed
+
+    async def _handle_checkout_session_completed(self, session: Dict[str, Any]):
+        """
+        Handle successful checkout
+        """
+        user_id = session.get("client_reference_id")
+        if not user_id:
+            print("Warning: No client_reference_id in session")
+            return
+
+        # Update user plan in Supabase
+        try:
+            from app.services.user_service import UserService
+            # Note: We need admin access here ideally. 
+            # If using standard key fails, ensure RLS allows updates or use SERVICE_ROLE_KEY
+            service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+            
+            # Using a temporary UserService with admin privileges if possible
+            # Or just raw supabase client
+            from supabase import create_client
+            supabase = create_client(
+                os.getenv("SUPABASE_URL"), 
+                service_role_key
+            )
+            
+            # Update profile
+            supabase.table("profiles").update({"subscription_tier": "Pro"}).eq("id", user_id).execute()
+            print(f"Successfully upgraded user {user_id} to Pro")
+            
+        except Exception as e:
+            print(f"Error updating user plan: {e}")

@@ -23,11 +23,12 @@ router = APIRouter(prefix="/api/pdf", tags=["PDF"])
 @router.post("/upload")
 async def upload_pdf(
     file: UploadFile = File(...),
+    authorization: str = Header(None),
     storage_service: StorageService = Depends(get_storage_service),
     pdf_service: PDFService = Depends(get_pdf_service)
 ):
     """
-    Upload a PDF file
+    Upload a PDF file with Usage Limit Check
     """
     try:
         # Validate file type
@@ -44,7 +45,43 @@ async def upload_pdf(
                 status_code=400,
                 detail=f"File size exceeds maximum of {max_size / 1024 / 1024}MB"
             )
+            
+        # ---------------------------------------------------------
+        # USAGE LIMIT CHECK
+        # ---------------------------------------------------------
+        user_id = None
+        if authorization and authorization.lower().startswith("bearer "):
+            token = authorization.split(" ")[1]
+            try:
+                from app.services.user_service import UserService
+                user_service = UserService(access_token=token)
+                
+                # Get User ID from Supabase
+                user_response = user_service.client.auth.get_user()
+                if user_response and user_response.user:
+                    user_id = user_response.user.id
+                    user_service.user_id = user_id
+                    
+                    # Check Limit
+                    stats = user_service.get_user_stats()
+                    limit = 10 if stats.subscription_plan == "Pro" else 1
+                    
+                    if stats.video_count >= limit:
+                        raise HTTPException(
+                            status_code=402, # Payment Required
+                            detail=f"Usage limit reached. You have created {stats.video_count}/{limit} videos. Upgrade to Pro for more."
+                        )
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"Error checking user limits: {e}")
+                # We default to allowing upload if check fails, or enforce strict?
+                # For MVP, let's log and proceed (or fail safe). 
+                # Better to fail safe for limits? No, let's allow if auth fails to avoid blocking valid users on glitch.
+                pass
         
+        # ---------------------------------------------------------
+
         # Generate job ID
         job_id = str(uuid.uuid4())
         
@@ -66,9 +103,10 @@ async def upload_pdf(
         video_id = db.create_video(
             job_id=job_id,
             pdf_filename=file.filename,
-            total_pages=total_pages
+            total_pages=total_pages,
+            user_id=user_id # Pass extracted user_id
         )
-        logger.info(f"Created video record {video_id} for job {job_id}")
+        logger.info(f"Created video record {video_id} for job {job_id} (User: {user_id})")
         
         return JSONResponse({
             "job_id": job_id,

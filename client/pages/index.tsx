@@ -4,7 +4,8 @@ import Head from 'next/head'
 import { Header } from '../components/Header'
 import { HeroSection } from '../components/HeroSection'
 import { PopularTools } from '../components/PopularTools'
-import { SimpleTasks } from '../components/SimpleTasks'
+import { FeaturesSection } from '../components/FeaturesSection'
+import { Testimonials } from '../components/Testimonials'
 import { FAQ } from '../components/FAQ'
 import { Pricing } from '../components/Pricing'
 import { Footer } from '../components/Footer'
@@ -52,19 +53,32 @@ const Home: NextPage = () => {
             </Head>
             <div className="min-h-screen bg-gray-50 scroll-smooth">
                 <Header />
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-                    <main className="pt-4 sm:pt-6">
-                        <HeroSection />
+                <main>
+                    <HeroSection />
+
+                    {/* Features Section (Bento Grid) */}
+                    <div id="features">
+                        <FeaturesSection />
+                    </div>
+
+                    {/* Popular Tools */}
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                         <PopularTools tools={tools} />
-                        <SimpleTasks />
-                        <div id="pricing">
+                    </div>
+
+                    {/* Testimonials */}
+                    <Testimonials />
+
+                    <div id="pricing" className="bg-gray-50">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                             <Pricing />
                         </div>
-                        <div id="faq">
-                            <FAQ />
-                        </div>
-                    </main>
-                </div>
+                    </div>
+
+                    <div id="faq" className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pb-20">
+                        <FAQ />
+                    </div>
+                </main>
                 <Footer />
             </div>
         </>

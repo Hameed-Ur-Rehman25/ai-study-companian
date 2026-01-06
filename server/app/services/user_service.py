@@ -25,14 +25,20 @@ class UserService:
     def get_user_stats(self) -> UserStats:
         # 1. Get Summary Count from Supabase
         summary_count = 0
+        subscription_plan = "Free"
+        
         if self.user_id:
             try:
-                # Assuming RLS filters by user_id automatically if we pass the token
-                # Or we explicitly query by user_id if we trust the user_id passed in constructor
+                # Get subscription plan from profiles
+                profile_result = self.client.table("profiles").select("subscription_tier").eq("id", self.user_id).execute()
+                if profile_result.data and len(profile_result.data) > 0:
+                     subscription_plan = profile_result.data[0].get("subscription_tier", "Free")
+
+                # Get summaries count
                 result = self.client.table("pdf_summaries").select("*", count="exact").execute()
                 summary_count = result.count if result.count is not None else len(result.data)
             except Exception as e:
-                print(f"Error fetching summaries count: {e}")
+                print(f"Error fetching summaries/profile: {e}")
                 
         # 2. Get Chat Session Count from Supabase
         chat_count = 0
@@ -43,10 +49,10 @@ class UserService:
              except Exception as e:
                 print(f"Error fetching chat count: {e}")
                 
-        # 3. Get Video Count from Local DB (Global count for now as discussed)
+        # 3. Get Video Count from Local DB (Filtered by User)
         video_count = 0
         try:
-            video_count = self.local_db.get_total_videos()
+            video_count = self.local_db.get_total_videos(self.user_id)
         except Exception as e:
             print(f"Error fetching video count: {e}")
 
@@ -54,5 +60,5 @@ class UserService:
             summary_count=summary_count,
             video_count=video_count, 
             chat_count=chat_count,
-            subscription_plan="Free" # Placeholder
+            subscription_plan=subscription_plan
         )

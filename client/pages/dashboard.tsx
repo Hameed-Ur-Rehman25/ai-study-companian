@@ -96,9 +96,26 @@ const Dashboard: NextPage = () => {
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500">Videos Created</p>
-                                <p className="text-3xl font-bold text-gray-900">
-                                    {isLoadingStats ? '-' : stats?.video_count}
-                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {isLoadingStats ? '-' : stats?.video_count}
+                                    </p>
+                                    {!isLoadingStats && stats && (
+                                        <span className="text-sm text-gray-500">
+                                            / {stats.subscription_plan === 'Pro' ? '10' : '1'}
+                                        </span>
+                                    )}
+                                </div>
+                                {!isLoadingStats && stats && (
+                                    <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full ${stats.subscription_plan === 'Pro' ? 'bg-blue-500' : 'bg-orange-500'}`}
+                                            style={{
+                                                width: `${Math.min(100, (stats.video_count / (stats.subscription_plan === 'Pro' ? 10 : 1)) * 100)}%`
+                                            }}
+                                        ></div>
+                                    </div>
+                                )}
                             </div>
                             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                                 <Video className="text-blue-600" size={24} />
@@ -168,7 +185,9 @@ const Dashboard: NextPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-bold text-gray-900">{user.email?.split('@')[0]}</p>
-                                        <p className="text-sm text-gray-500">Free Plan</p>
+                                        <p className="text-sm text-gray-500">
+                                            {isLoadingStats ? 'Loading...' : `${stats?.subscription_plan} Plan`}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
@@ -180,9 +199,16 @@ const Dashboard: NextPage = () => {
                                         <span className="text-sm text-green-600 font-medium">Active</span>
                                     </div>
 
-                                    <Link href="/#pricing" className="block w-full text-center py-2 px-4 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm">
-                                        Upgrade to Pro
-                                    </Link>
+                                    {stats?.subscription_plan !== 'Pro' && (
+                                        <Link href="/#pricing" className="block w-full text-center py-2 px-4 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm">
+                                            Upgrade to Pro
+                                        </Link>
+                                    )}
+                                    {stats?.subscription_plan === 'Pro' && (
+                                        <button className="block w-full text-center py-2 px-4 bg-gray-100 text-gray-500 rounded-lg cursor-default font-medium text-sm">
+                                            Pro Active
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

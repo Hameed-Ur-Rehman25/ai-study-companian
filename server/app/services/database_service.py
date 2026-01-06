@@ -33,6 +33,7 @@ class Database:
             CREATE TABLE IF NOT EXISTS videos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 job_id TEXT UNIQUE NOT NULL,
+                user_id TEXT,
                 pdf_filename TEXT NOT NULL,
                 total_pages INTEGER NOT NULL,
                 status TEXT DEFAULT 'processing',
@@ -40,6 +41,13 @@ class Database:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # Check if user_id column exists (migration for existing db)
+        cursor.execute("PRAGMA table_info(videos)")
+        columns = [column[1] for column in cursor.fetchall()]
+        if 'user_id' not in columns:
+            print("Migrating database: Adding user_id to videos table")
+            cursor.execute("ALTER TABLE videos ADD COLUMN user_id TEXT")
         
         # Pages table
         cursor.execute("""
@@ -74,15 +82,15 @@ class Database:
         conn.close()
     
     # Video operations
-    def create_video(self, job_id: str, pdf_filename: str, total_pages: int) -> int:
+    def create_video(self, job_id: str, pdf_filename: str, total_pages: int, user_id: Optional[str] = None) -> int:
         """Create a new video entry"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         cursor.execute("""
-            INSERT INTO videos (job_id, pdf_filename, total_pages, status)
-            VALUES (?, ?, ?, 'extracting')
-        """, (job_id, pdf_filename, total_pages))
+            INSERT INTO videos (job_id, pdf_filename, total_pages, status, user_id)
+            VALUES (?, ?, ?, 'extracting', ?)
+        """, (job_id, pdf_filename, total_pages, user_id))
         
         video_id = cursor.lastrowid
         conn.commit()
@@ -116,12 +124,16 @@ class Database:
         conn.commit()
         conn.close()
     
-    def get_total_videos(self) -> int:
-        """Get total number of videos"""
+    def get_total_videos(self, user_id: Optional[str] = None) -> int:
+        """Get total number of videos. If user_id provided, filter by user."""
         conn = self.get_connection()
         cursor = conn.cursor()
         
-        cursor.execute("SELECT COUNT(*) FROM videos")
+        if user_id:
+            cursor.execute("SELECT COUNT(*) FROM videos WHERE user_id = ?", (user_id,))
+        else:
+            cursor.execute("SELECT COUNT(*) FROM videos")
+            
         count = cursor.fetchone()[0]
         
         conn.close()

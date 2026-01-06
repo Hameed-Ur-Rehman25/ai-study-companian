@@ -34,3 +34,15 @@ async def get_products(
     stripe_service: StripeService = Depends(get_stripe_service)
 ):
     return stripe_service.get_products()
+
+from fastapi import Request, Header
+
+@router.post("/webhook")
+async def stripe_webhook(
+    request: Request,
+    stripe_signature: str = Header(None),
+    stripe_service: StripeService = Depends(get_stripe_service)
+):
+    payload = await request.body()
+    await stripe_service.handle_webhook(payload, stripe_signature)
+    return {"status": "success"}
