@@ -74,20 +74,28 @@ export const AuthCard = ({ initialMode = 'login' }: AuthCardProps) => {
         }
     }
 
+    const handleGoogleAuth = async () => {
+        setLoading(true)
+        setError(null)
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/`,
+                },
+            })
+            if (error) throw error
+        } catch (error: any) {
+            setError(error.message)
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="bg-white rounded-[2rem] shadow-2xl relative overflow-hidden max-w-4xl w-full min-h-[600px] flex">
 
             {/* 
                Forms Container 
-               We stack them or place them?
-               
-               Design:
-               Login Mode: [ Blue Overlay ] [ Login Form ]
-               Signup Mode: [ Signup Form ] [ Blue Overlay ]
-
-               Start with both forms absolutely positioned or flex?
-               Let's use absolute positioning for forms to easily control their visibility/position.
-               Or actually, 2 columns 50% width.
             */}
 
             {/* Sign Up Form - Always on Left */}
@@ -159,6 +167,7 @@ export const AuthCard = ({ initialMode = 'login' }: AuthCardProps) => {
                         <div className="mt-6">
                             <button
                                 type="button"
+                                onClick={handleGoogleAuth}
                                 className="w-full py-3 border border-gray-200 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-all text-gray-700 font-medium"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -226,6 +235,7 @@ export const AuthCard = ({ initialMode = 'login' }: AuthCardProps) => {
                         <div className="mt-6">
                             <button
                                 type="button"
+                                onClick={handleGoogleAuth}
                                 className="w-full py-3 border border-gray-200 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-all text-gray-700 font-medium"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
