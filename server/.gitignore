@@ -26,7 +26,7 @@ data/videos.db
 *.db
 
 # Environment
-# .env
+.env
 .venv
 
 # Google Cloud Credentials (IMPORTANT: Never commit these!)
